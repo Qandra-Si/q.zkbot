@@ -6,4 +6,6 @@
 
 Discord-бот для публикации looses и wins с zkillboard.
 
-Создать своё приложение [тут](https://discordapp.com/developers/applications/).
+Создать своё discord-приложение тут: https://discordapp.com/developers/applications/
+
+Создать своё esi-приложение тут: https://developers.eveonline.com/applications
