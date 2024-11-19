@@ -1,0 +1,6 @@
+typing
+requests
+datetime
+urllib3
+python-dateutil
+discord.py

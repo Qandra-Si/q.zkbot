@@ -1,0 +1,3 @@
+[submodule "eve_esi_interface"]
+	path = eve_esi_interface
+	url = git@github.com:Qandra-Si/q.eve_esi_interface.git
