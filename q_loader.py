@@ -25,6 +25,7 @@ Required application scopes:
 import sys
 import argparse
 import typing
+import datetime
 
 import q_settings
 import eve_esi_interface as esi
@@ -52,6 +53,8 @@ def main():
     elif args.verbose:
         verbosity_level = 1
 
+    # получение информации о текущем времени
+    at: datetime.datetime = datetime.datetime.now(datetime.UTC)
     # подключение к БД
     qzdb: db.QZKBotDatabase = db.QZKBotDatabase(debug=verbosity_level == 3)
     qzdb.connect(q_settings.g_database)
@@ -110,12 +113,17 @@ def main():
     print(f"'{corporation_name}' corporation has {len(corp_killmails_data)} recent killmails\n")
     sys.stdout.flush()
 
+    for zkm in corp_killmails_data:
+        qzm.insert_into_zkillmails_hash_only(zkm, esi_interface.last_modified if esi_interface.last_modified else at)
+    qzdb.commit()
+
+    # Public information (zkillboard)
     corp_zkillmails_data = zkb_interface.get_zkb_data(f"corporationID/{corporation_id}/")
     print(f"'{corporation_name}' corporation has {len(corp_zkillmails_data)} zkillmails\n")
     sys.stdout.flush()
 
     for zkm in corp_zkillmails_data:
-        qzm.insert_into_zkillmails(zkm)
+        qzm.insert_into_zkillmails(zkm, zkb_interface.last_modified if zkb_interface.last_modified else at)
     qzdb.commit()
 
     del qzm
