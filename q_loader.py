@@ -28,6 +28,7 @@ import typing
 
 import q_settings
 import eve_esi_interface as esi
+import zkillboard_interface as zkb
 
 from __init__ import __version__
 
@@ -41,7 +42,7 @@ def main():
     parser.add_argument('--verbosity', help='Verbose mode level', required=False, dest='verbosity')
     args = parser.parse_args()
 
-    print(f"Running server v{__version__}")
+    print(f"Running loader v{__version__}")
 
     # уровень журнализации: 1 = INFO, 2 = DETAILS, 3 = DEBUG
     verbosity_level: typing.Optional[int] = None
@@ -50,40 +51,61 @@ def main():
     elif args.verbose:
         verbosity_level = 1
 
-    # настройка Eve Online ESI Swagger interface
-    auth = esi.EveESIAuth(
-        '{}/auth_cache'.format(args.cache_dir),
-        debug=verbosity_level is not None)
-    client = esi.EveESIClient(
-        auth,
-        q_settings.g_esi_client_id,
+    # настройка ZKillboard interface
+    zkb_client = zkb.ZKillboardClient(
         keep_alive=True,
-        debug=verbosity_level is not None,
+        debug=verbosity_level == 3,
         logger=True,
-        user_agent='Q.ZKBot v{ver}'.format(ver=__version__),
+        user_agent='Q.ZKBot/{ver}'.format(ver=__version__),
         restrict_tls13=q_settings.g_client_restrict_tls13)
-    interface = esi.EveOnlineInterface(
-        client,
-        q_settings.g_esi_client_scope,
-        cache_dir='{}/esi_cache'.format(args.cache_dir),
+    zkb_interface = zkb.ZKillboardInterface(
+        client=zkb_client,
+        cache_dir=f'{args.cache_dir}/zkb_cache',
         offline_mode=args.offline)
 
-    authz = interface.authenticate(args.pilot)
+    # настройка Eve Online ESI Swagger interface
+    auth = esi.EveESIAuth(
+        cache_dir=f'{args.cache_dir}/auth_cache',
+        debug=verbosity_level is not None)
+    esi_client = esi.EveESIClient(
+        auth_cache=auth,
+        client_id=q_settings.g_esi_client_id,
+        keep_alive=True,
+        debug=verbosity_level == 3,
+        logger=True,
+        user_agent='Q.ZKBot/{ver}'.format(ver=__version__),
+        restrict_tls13=q_settings.g_client_restrict_tls13)
+    esi_interface = esi.EveOnlineInterface(
+        client=esi_client,
+        scopes=q_settings.g_esi_client_scope,
+        cache_dir=f'{args.cache_dir}/esi_cache',
+        offline_mode=args.offline)
+
+    authz = esi_interface.authenticate(args.pilot, q_settings.g_esi_client_id)
     character_id = authz["character_id"]
     character_name = authz["character_name"]
 
     # Public information about a character
-    character_data = interface.get_esi_data(
-        "characters/{}/".format(character_id),
+    character_data = esi_interface.get_esi_data(
+        url=f"characters/{character_id}/",
         fully_trust_cache=True)
     # Public information about a corporation
-    corporation_data = interface.get_esi_data(
-        "corporations/{}/".format(character_data["corporation_id"]),
+    corporation_data = esi_interface.get_esi_data(
+        url=f"corporations/{character_data["corporation_id"]}/",
         fully_trust_cache=True)
 
-    # corporation_id = character_data["corporation_id"]
+    corporation_id = character_data["corporation_id"]
     corporation_name = corporation_data["name"]
     print("\n{} is from '{}' corporation".format(character_name, corporation_name))
+    sys.stdout.flush()
+
+    # Requires role(s): Director
+    corp_killmails_data = esi_interface.get_esi_paged_data(f"corporations/{corporation_id}/killmails/recent/")
+    print("\n'{}' corporation has {} recent killmails".format(corporation_name, len(corp_killmails_data)))
+    sys.stdout.flush()
+
+    corp_zkillmails_data = zkb_interface.get_zkb_data(f"corporationID/{corporation_id}/")
+    print("\n'{}' corporation has {} zkillmails".format(corporation_name, len(corp_zkillmails_data)))
     sys.stdout.flush()
 
 

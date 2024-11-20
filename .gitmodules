@@ -1,3 +1,6 @@
 [submodule "eve_esi_interface"]
 	path = eve_esi_interface
 	url = git@github.com:Qandra-Si/q.eve_esi_interface.git
+[submodule "zkillboard_interface"]
+	path = zkillboard_interface
+	url = git@github.com:Qandra-Si/q.zkillboard_interface.git
