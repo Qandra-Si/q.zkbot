@@ -10,3 +10,20 @@ g_esi_client_scope = ["esi-killmails.read_corporation_killmails.v1",  # Requires
 # также можно проврерить различие и удостовериться:
 # curl --tlsv1.2 --tls-max 1.2 -X GET "https://esi.evetech.net/latest/status/?datasource=tranquility" -H  "accept: application/json" -H  "Cache-Control: no-cache"
 g_client_restrict_tls13: bool = False
+
+g_database = {
+    #"ssh_tunnel": {
+    #    "host": "server.ru",
+    #    "port": 22,
+    #    "username": "user",
+    #    # next, you should specify either a password or a key
+    #    "private_key": "/path/to/private.key",
+    #    "password": None,
+    #    # remove bind address and port will be used from the settings below
+    #},
+    "host":     "127.0.0.1",
+    "dbname":   "qi_db",
+    "port":     5432,
+    "user":     "qz_user",
+    "password": "qz_LAZ7dBLmSJb9"  # <-- this is the value you probably need to edit
+}

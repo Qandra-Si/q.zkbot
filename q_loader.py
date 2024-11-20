@@ -29,6 +29,7 @@ import typing
 import q_settings
 import eve_esi_interface as esi
 import zkillboard_interface as zkb
+import postgresql_interface as db
 
 from __init__ import __version__
 
@@ -50,6 +51,11 @@ def main():
         verbosity_level = int(args.verbosity)
     elif args.verbose:
         verbosity_level = 1
+
+    # подключение к БД
+    qzdb: db.QZKBotDatabase = db.QZKBotDatabase(debug=verbosity_level == 3)
+    qzdb.connect(q_settings.g_database)
+    qzm: db.QZKBotMethods = db.QZKBotMethods(qzdb)
 
     # настройка ZKillboard interface
     zkb_client = zkb.ZKillboardClient(
@@ -96,17 +102,25 @@ def main():
 
     corporation_id = character_data["corporation_id"]
     corporation_name = corporation_data["name"]
-    print("\n{} is from '{}' corporation".format(character_name, corporation_name))
+    print(f"{character_name} is from '{corporation_name}' corporation\n")
     sys.stdout.flush()
 
     # Requires role(s): Director
     corp_killmails_data = esi_interface.get_esi_paged_data(f"corporations/{corporation_id}/killmails/recent/")
-    print("\n'{}' corporation has {} recent killmails".format(corporation_name, len(corp_killmails_data)))
+    print(f"'{corporation_name}' corporation has {len(corp_killmails_data)} recent killmails\n")
     sys.stdout.flush()
 
     corp_zkillmails_data = zkb_interface.get_zkb_data(f"corporationID/{corporation_id}/")
-    print("\n'{}' corporation has {} zkillmails".format(corporation_name, len(corp_zkillmails_data)))
+    print(f"'{corporation_name}' corporation has {len(corp_zkillmails_data)} zkillmails\n")
     sys.stdout.flush()
+
+    for zkm in corp_zkillmails_data:
+        qzm.insert_into_zkillmails(zkm)
+    qzdb.commit()
+
+    del qzm
+    qzdb.disconnect()
+    del qzdb
 
 
 if __name__ == "__main__":

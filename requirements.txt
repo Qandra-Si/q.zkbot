@@ -4,4 +4,6 @@ python-jose
 datetime
 urllib3
 python-dateutil
+psycopg2
+sshtunnel
 discord.py
