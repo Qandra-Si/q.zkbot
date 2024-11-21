@@ -40,6 +40,7 @@ def main():
     parser.add_argument('--pilot', help='Pilot name', required=True, dest='pilot')
     parser.add_argument('--cache_dir', help='Cache dir', required=False, default='.q_zkbot', dest='cache_dir')
     parser.add_argument('--offline', help='Offline mode', required=False, action=argparse.BooleanOptionalAction, default=False, dest='offline')
+    parser.add_argument('--online', help='Online mode', required=False, action=argparse.BooleanOptionalAction, default=True, dest='online')
     parser.add_argument('-v', '--verbose', help='Verbose mode', action=argparse.BooleanOptionalAction, default=False, dest='verbose')
     parser.add_argument('--verbosity', help='Verbose mode level', required=False, dest='verbosity')
     args = parser.parse_args()
@@ -52,6 +53,11 @@ def main():
         verbosity_level = int(args.verbosity)
     elif args.verbose:
         verbosity_level = 1
+
+    # режим работы с данными: online - загрузка из сети, offline - загрузка из кеша
+    offline_mode: bool = args.offline
+    if not offline_mode:
+        offline_mode: bool = not args.online
 
     # получение информации о текущем времени
     at: datetime.datetime = datetime.datetime.now(datetime.UTC)
@@ -70,7 +76,7 @@ def main():
     zkb_interface = zkb.ZKillboardInterface(
         client=zkb_client,
         cache_dir=f'{args.cache_dir}/zkb_cache',
-        offline_mode=args.offline)
+        offline_mode=offline_mode)
 
     # настройка Eve Online ESI Swagger interface
     auth = esi.EveESIAuth(
@@ -88,7 +94,7 @@ def main():
         client=esi_client,
         scopes=q_settings.g_esi_client_scope,
         cache_dir=f'{args.cache_dir}/esi_cache',
-        offline_mode=args.offline)
+        offline_mode=offline_mode)
 
     authz = esi_interface.authenticate(args.pilot, q_settings.g_esi_client_id)
     character_id = authz["character_id"]
@@ -125,6 +131,19 @@ def main():
     for zkm in corp_zkillmails_data:
         qzm.insert_into_zkillmails(zkm, zkb_interface.last_modified if zkb_interface.last_modified else at)
     qzdb.commit()
+
+    unrelated_killmails = qzm.get_unrelated_killmails()
+    print(f"'{corporation_name}' corporation has {len(unrelated_killmails)} unrelated killmails\n")
+    sys.stdout.flush()
+
+    if unrelated_killmails:
+        for killmail_id, killmail_hash in unrelated_killmails:
+            # Public information
+            killmail_data = esi_interface.get_esi_data(f"killmails/{killmail_id}/{killmail_hash}/")
+            print(f"New killmail {killmail_id} with {len(killmail_data['attackers'])} attackers and {killmail_data['victim'].get('character_id')} victim")
+            sys.stdout.flush()
+
+            qzm.insert_into_killmails(killmail_id, killmail_data)
 
     del qzm
     qzdb.disconnect()

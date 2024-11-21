@@ -26,12 +26,12 @@ class QZKBotMethods:
             " zkm_id,"
             " zkm_hash,"
             " zkm_created_at,"
-            " zkm_updated_at) "
-            "VALUES ("
+            " zkm_updated_at)"
+            "VALUES("
             " %(id)s,"
             " %(h)s,"
             " CURRENT_TIMESTAMP AT TIME ZONE 'GMT',"
-            " TIMESTAMP WITHOUT TIME ZONE %(at)s) "
+            " TIMESTAMP WITHOUT TIME ZONE %(at)s)"
             "ON CONFLICT ON CONSTRAINT pk_zkm DO NOTHING;",
             {'id': km_data['killmail_id'],
              'h': km_data['killmail_hash'],
@@ -57,7 +57,7 @@ class QZKBotMethods:
             " zkm_labels,"
             " zkm_created_at,"
             " zkm_updated_at) "
-            "VALUES ("
+            "VALUES("
             " %(id)s,"
             " %(h)s,"
             " %(l)s,"
@@ -71,7 +71,7 @@ class QZKBotMethods:
             " %(a)s,"
             " %(lbs)s,"
             " CURRENT_TIMESTAMP AT TIME ZONE 'GMT',"
-            " TIMESTAMP WITHOUT TIME ZONE %(at)s) "
+            " TIMESTAMP WITHOUT TIME ZONE %(at)s)"
             "ON CONFLICT ON CONSTRAINT pk_zkm DO UPDATE SET"
             " zkm_location=%(l)s,"
             " zkm_fitted_value=%(fv)s,"
@@ -100,3 +100,109 @@ class QZKBotMethods:
              'at': updated_at,
              }
         )
+
+    def get_unrelated_killmails(self) -> typing.List[typing.Tuple[int, str]]:
+        rows = self.db.select_all_rows(
+            "SELECT"
+            " zkm_id,"
+            " zkm_hash "
+            "FROM qz.zkillmails "
+            "WHERE zkm_id NOT IN (SELECT km_id FROM qz.killmails);"
+        )
+        if rows is None:
+            return []
+        return [(int(_[0]), _[1]) for _ in rows]
+
+    def insert_into_killmails(self, killmail_id, data) -> None:
+        row = self.db.select_one_row(
+            "INSERT INTO killmails("
+            " km_id,"
+            " km_time,"
+            " km_moon_id,"
+            " km_solar_system_id,"
+            " km_war_id) "
+            "VALUES("
+            " %(id)s,"
+            " %(t)s,"
+            " %(m)s,"
+            " %(ss)s,"
+            " %(w)s)"
+            "ON CONFLICT ON CONSTRAINT pk_km DO NOTHING "
+            "RETURNING km_id;",
+            {'id': killmail_id,
+             't': data['killmail_time'],
+             'm': data.get('moon_id'),
+             'ss': data['solar_system_id'],
+             'w': data.get('war_id'),
+             }
+        )
+        if row is not None:
+            v = data['victim']
+            self.db.execute(
+                "INSERT INTO victims("
+                " v_killmail_id,"
+                " v_alliance_id,"
+                " v_character_id,"
+                " v_corporation_id,"
+                " v_damage_taken,"
+                " v_faction_id,"
+                " v_position,"
+                " v_ship_type_id)"
+                "VALUES("
+                " %(id)s,"
+                " %(a)s,"
+                " %(ch)s,"
+                " %(co)s,"
+                " %(d)s,"
+                " %(f)s,"
+                " %(p)s,"
+                " %(t)s)"
+                "ON CONFLICT ON CONSTRAINT pk_v DO NOTHING;",
+                {'id': killmail_id,
+                 'a': v.get('alliance_id'),
+                 'ch': v.get('character_id'),
+                 'co': v.get('corporation_id'),
+                 'd': v['damage_taken'],
+                 'f': v.get('faction_id'),
+                 'p': None if 'position' not in v else [v['position']['x'], v['position']['y'], v['position']['z']],
+                 't': v['ship_type_id'],
+                 }
+            )
+            attackers = data['attackers']
+            for a in attackers:
+                self.db.execute(
+                    "INSERT INTO attackers("
+                    " a_killmail_id,"
+                    " a_alliance_id,"
+                    " a_character_id,"
+                    " a_corporation_id,"
+                    " a_damage_done,"
+                    " a_faction_id,"
+                    " a_final_blow,"
+                    " a_security_status,"
+                    " a_ship_type_id,"
+                    " a_weapon_type_id)"
+                    "VALUES("
+                    " %(id)s,"
+                    " %(a)s,"
+                    " %(ch)s,"
+                    " %(co)s,"
+                    " %(d)s,"
+                    " %(f)s,"
+                    " %(fb)s,"
+                    " %(cc)s,"
+                    " %(t)s,"
+                    " %(w)s);",
+                    {'id': killmail_id,
+                     'a': a.get('alliance_id'),
+                     'ch': a.get('character_id'),
+                     'co': a.get('corporation_id'),
+                     'd': a['damage_done'],
+                     'f': a.get('faction_id'),
+                     'fb': a['final_blow'],
+                     'cc': a['security_status'],
+                     't': a.get('ship_type_id'),
+                     'w': a.get('weapon_type_id'),
+                     }
+                )
+
