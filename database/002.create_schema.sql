@@ -4,6 +4,9 @@
 
 CREATE SCHEMA IF NOT EXISTS qz AUTHORIZATION qz_user;
 
+DROP INDEX IF EXISTS idx_pk_p;
+DROP TABLE IF EXISTS qz.published;
+
 DROP INDEX IF EXISTS idx_a_ship_type_id;
 DROP INDEX IF EXISTS idx_a_corporation_id;
 DROP INDEX IF EXISTS idx_a_character_id;
@@ -190,6 +193,25 @@ CREATE INDEX idx_a_ship_type_id
     ON qz.attackers USING btree
     (a_ship_type_id ASC NULLS LAST)
     WHERE (a_ship_type_id IS NOT NULL);
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+-- published
+-- справочник со списком уже опубликованных в discord-е событий
+--------------------------------------------------------------------------------
+CREATE TABLE qz.published
+(
+    p_killmail_id INTEGER NOT NULL,
+    CONSTRAINT pk_p PRIMARY KEY (p_killmail_id)
+)
+TABLESPACE pg_default;
+
+ALTER TABLE qz.published OWNER TO qz_user;
+
+CREATE UNIQUE INDEX idx_pk_p
+    ON qz.published USING btree
+    (p_killmail_id ASC NULLS LAST)
+TABLESPACE pg_default;
 --------------------------------------------------------------------------------
 
 -- получаем справку в конце выполнения всех запросов

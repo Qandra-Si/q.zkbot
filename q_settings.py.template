@@ -1,4 +1,5 @@
 g_discord_token: str = '000000000000000000000000000000000000000000000000000000000000000000000000'  # <-- this is the value you need to edit
+q_discord_channel: int = 0000000000000000000  # <-- this is the value you need to edit
 
 g_esi_client_id = "00000000000000000000000000000000"  # <-- this is the value you need to edit
 g_esi_client_scope = ["esi-killmails.read_corporation_killmails.v1",  # Requires role(s): Director

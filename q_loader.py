@@ -144,6 +144,10 @@ def main():
             sys.stdout.flush()
 
             qzm.insert_into_killmails(killmail_id, killmail_data)
+        qzdb.commit()
+
+        qzm.mark_all_killmails_as_published_if_none()
+        qzdb.commit()
 
     del qzm
     qzdb.disconnect()
