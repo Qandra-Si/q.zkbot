@@ -106,8 +106,8 @@ class QZKBotMethods:
             "SELECT"
             " zkm_id,"
             " zkm_hash "
-            "FROM qz.zkillmails "
-            "WHERE zkm_id NOT IN (SELECT km_id FROM qz.killmails);"
+            "FROM zkillmails "
+            "WHERE zkm_id NOT IN (SELECT km_id FROM killmails);"
         )
         if rows is None:
             return []
@@ -211,14 +211,23 @@ class QZKBotMethods:
             "insert into published"
             " select km_id"
             " from killmails"
-            " where 0 = (select count(1) from published);")
+            " where 0 = (select count(1) from published);"
+        )
 
     def get_all_non_published_killmails(self) -> typing.List[int]:
-        rows = self.db.select_all_rows("""
-SELECT km_id
-FROM qz.killmails
-WHERE km_id NOT IN (SELECT p_killmail_id FROM published)
-ORDER BY km_time;""")
+        rows = self.db.select_all_rows(
+            "SELECT km_id "
+            "FROM killmails "
+            "WHERE km_id NOT IN (SELECT p_killmail_id FROM published)"
+            "ORDER BY km_time;"
+        )
         if rows is None:
             return []
         return [int(_) for _ in rows]
+
+    def mark_killmail_as_published(self, killmail_id: int) -> None:
+        self.db.execute(
+            "INSERT INTO published(p_killmail_id)"
+            "VALUES(%(id)s);",
+            {'id': killmail_id}
+        )
