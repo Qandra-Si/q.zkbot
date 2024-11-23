@@ -1,9 +1,17 @@
 import typing
+import http.client
 import discord
 from discord.ext import tasks
 
 import postgresql_interface as db
 import q_settings
+
+
+def is_killmail_ready_on_zkillboard(killmail_id: int) -> bool:
+    conn = http.client.HTTPSConnection("zkillboard.com")
+    conn.request("GET", f"/kill/{killmail_id}/")
+    res = conn.getresponse()
+    return res.status != 404  # если всё что угодно, но не "404 Not Found", то публикуем
 
 
 class MyClient(discord.Client):
@@ -27,10 +35,14 @@ class MyClient(discord.Client):
             qzm: db.QZKBotMethods = db.QZKBotMethods(qzdb)
             non_published: typing.List[int] = qzm.get_all_non_published_killmails()
             if non_published:
+                is_any_ready: bool = False
                 for killmail_id in non_published:
-                    await channel.send(f'https://zkillboard.com/kill/{killmail_id}/')
-                    qzm.mark_killmail_as_published(killmail_id)
-                qzdb.commit()
+                    if is_killmail_ready_on_zkillboard(killmail_id):
+                        await channel.send(f'https://zkillboard.com/kill/{killmail_id}/')
+                        qzm.mark_killmail_as_published(killmail_id)
+                        is_any_ready = True
+                if is_any_ready:
+                    qzdb.commit()
             del qzm
             qzdb.disconnect()
             del qzdb
