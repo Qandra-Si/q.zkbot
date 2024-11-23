@@ -145,6 +145,7 @@ dmypy.json
 
 # Q.ZKBot
 /*_settings.py
+/q_settings*.py
 /.q_zkbot
 /*.~json
 /database/*.dmp
