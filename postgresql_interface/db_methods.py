@@ -223,7 +223,7 @@ class QZKBotMethods:
         )
         if rows is None:
             return []
-        return [int(_) for _ in rows]
+        return [int(_[0]) for _ in rows]
 
     def mark_killmail_as_published(self, killmail_id: int) -> None:
         self.db.execute(
