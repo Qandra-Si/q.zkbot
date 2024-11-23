@@ -218,7 +218,9 @@ class QZKBotMethods:
         rows = self.db.select_all_rows(
             "SELECT km_id "
             "FROM killmails "
-            "WHERE km_id NOT IN (SELECT p_killmail_id FROM published)"
+            "WHERE"
+            " km_id NOT IN (SELECT p_killmail_id FROM published) AND"
+            " km_id IN (SELECT zkm_id FROM zkillmails WHERE zkm_location IS NOT NULL)"
             "ORDER BY km_time;"
         )
         if rows is None:
