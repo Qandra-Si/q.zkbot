@@ -13,14 +13,18 @@ Discord-бот для публикации looses и wins с zkillboard.
 Установка:
 
 ```bash
+sudo apt install postgresql
+
 mkdir ~/q_zkbot
 cd ~/q_zkbot
 git clone git@github.com:Qandra-Si/q.zkbot.git .
 git submodule init
 git submodule update --recursive
 
+# выполни скрипты настройки БД в директории database
+
 cp q_settings.py.template q_settings.py
-# edit q_settings.py
+# отредактируй q_settings.py
 
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt

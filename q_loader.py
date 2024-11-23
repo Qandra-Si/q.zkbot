@@ -106,7 +106,7 @@ def main():
         fully_trust_cache=True)
     # Public information about a corporation
     corporation_data = esi_interface.get_esi_data(
-        url=f"corporations/{character_data["corporation_id"]}/",
+        url=f"corporations/{character_data['corporation_id']}/",
         fully_trust_cache=True)
 
     corporation_id = character_data["corporation_id"]
