@@ -28,4 +28,19 @@ cp q_settings.py.template q_settings.py
 
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
+
+# запустить однократно
+.venv/bin/python3 q_loader.py --pilot="Qandra Si" --online
+```
+
+Добавить в `crontab -e` команду:
+
+```bash
+*/5 * * * * /usr/bin/flock -w 0 /tmp/qzkbot-fast.lockfile /home/user/q_zkbot/run-5minutes.sh >> /tmp/tmp-qz.cron 2>&1
+```
+
+Запустить в `screen` команду:
+
+```bash
+.venv/bin/python3 q_discord.py
 ```
