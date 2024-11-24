@@ -17,7 +17,7 @@ sudo apt install postgresql
 
 mkdir ~/q_zkbot
 cd ~/q_zkbot
-git clone git@github.com:Qandra-Si/q.zkbot.git .
+git clone https://github.com/Qandra-Si/q.zkbot.git .
 git submodule init
 git submodule update --recursive
 
@@ -29,7 +29,7 @@ cp q_settings.py.template q_settings.py
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 
-# запустить однократно
+# запустить однократно указав имя пилота с директорской ролью (не должность, а роль)
 .venv/bin/python3 q_loader.py --pilot="Qandra Si" --online
 ```
 
