@@ -220,7 +220,7 @@ class QZKBotMethods:
             "FROM killmails, zkillmails "
             "WHERE"
             " km_id NOT IN (SELECT p_killmail_id FROM published) AND"
-            " km_id=zkm_id"
+            " km_id=zkm_id "
             "ORDER BY km_time;"
         )
         if rows is None:
