@@ -32,3 +32,7 @@ g_database = {
 }
 
 q_tracked_corporations: typing.List[int] = [000000000]  # <-- this is the value you need to edit
+
+# с помощью следующей настройки можно указать, чтобы в footer-е появлялся значёк крпорации, а не альянса, в тех
+# случаях, когда происходит потеря tracked-корабля
+g_use_corporation_emblem_instead_alliance: bool = False

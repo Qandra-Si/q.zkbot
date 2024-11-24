@@ -2,6 +2,8 @@
 import json
 import discord
 
+import q_settings
+
 
 class FormattedDiscordMessage:
     def __init__(self,
@@ -135,6 +137,15 @@ class FormattedDiscordMessage:
         if zkb.get('awox', False):
             footer_txt += " ● awox"
 
+        # выбор иконки, которая появится в footer-е
+        footer_icon: typing.Optional[str] = None
+        if loss and q_settings.g_use_corporation_emblem_instead_alliance and victim_corporation_id:
+            footer_icon = f"https://images.evetech.net/corporations/{victim_corporation_id}/logo?size=32"
+        elif victim_alliance_id:
+            footer_icon = f"https://images.evetech.net/alliances/{victim_alliance_id}/logo?size=32"
+        elif victim_corporation_id:
+            footer_icon = f"https://images.evetech.net/corporations/{victim_corporation_id}/logo?size=32"
+
         # await channel.send(contents=text, embed=embed)
         self.contents = \
             f"[**{solar_system_name} | {victim_ship_type_name}**]" \
@@ -144,9 +155,7 @@ class FormattedDiscordMessage:
             colour=0xC85C70 if loss else 0x2e6b4d)
         self.embed.set_thumbnail(
             url=f"https://images.evetech.net/types/{victim_ship_type_id}/render?size=64")
-        if victim_alliance_id:
-            self.embed.set_footer(
-                text=footer_txt,
-                icon_url=f"https://images.evetech.net/alliances/{victim_alliance_id}/logo?size=32")
+        if footer_icon:
+            self.embed.set_footer(text=footer_txt, icon_url=footer_icon)
         else:
             self.embed.set_footer(text=footer_txt)
