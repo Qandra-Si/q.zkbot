@@ -86,6 +86,7 @@ class FormattedDiscordMessage:
                         f"({corp['pilots']})"
             attackers_txt += "."
 
+        # Blood Khanid (Warriors tribe)
         victim_character_id: typing.Optional[int] = victim.get('character_id')
         victim_corporation_id: typing.Optional[int] = victim.get('corporation_id')
         victim_alliance_id: typing.Optional[int] = victim.get('alliance_id')
@@ -98,15 +99,18 @@ class FormattedDiscordMessage:
             corporation_name: str = victim.get('corporation_name', str(victim_corporation_id))
             victim_txt += f" ([{corporation_name}](https://zkillboard.com/corporation/{victim_corporation_id}/))"
 
+        # Blood Khanid (Warriors tribe) потерял Rupture
         victim_ship_type_id: int = victim['ship_type_id']
         victim_ship_type_name: str = victim.get('ship_name', str(victim_ship_type_id))
-        victim_txt += f" потерял свой **{victim_ship_type_name}**"
+        victim_txt += f" потерял **{victim_ship_type_name}**"
 
+        # Blood Khanid (Warriors tribe) потерял Rupture в P-E9GN
         solar_system_id: int = solar_system['id']
         solar_system_name: str = solar_system.get('name', str(solar_system_id))
         region_name: typing.Optional[str] = solar_system.get('region')
         victim_txt += f" в [{solar_system_name}](https://zkillboard.com/system/{solar_system_id}/)"
         if region_name:
+            # Blood Khanid (Warriors tribe) потерял Rupture в P-E9GN в Geminate
             victim_txt += f" в **{region_name}**"
 
         worth: typing.Optional[float] = zkb.get('worth')
@@ -117,6 +121,7 @@ class FormattedDiscordMessage:
                 victim_txt += f" стоимостью **{worth/1000000.0:.2f}m** ISK."
             else:
                 victim_txt += f" стоимостью **{worth/1000000000.0:,.2f}b** ISK."
+        victim_txt += "."
 
         datetime_txt: str = str(self.__killmail_data['time'])
         datetime_txt = f"{datetime_txt[:10]} {datetime_txt[11:16]}"
