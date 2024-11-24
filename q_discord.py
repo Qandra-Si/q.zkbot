@@ -42,7 +42,8 @@ class MyClient(discord.Client):
                     killmail_id: int = zkb_data['id']
                     killmail_hash: str = zkb_data['hash']
                     if is_killmail_ready_on_zkillboard(killmail_id):
-                        print(f'Publishing killmail {killmail_id} (worth: {zkb_data.get('worth')})')
+                        worth: typing.Optional[float] = zkb_data.get('worth')
+                        print(f'Publishing killmail {killmail_id} (worth: {worth})')
                         fdm: fmt.FormattedDiscordMessage = fmt.FormattedDiscordMessage(
                             killmail_id,
                             killmail_hash,
