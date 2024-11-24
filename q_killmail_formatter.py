@@ -8,16 +8,17 @@ class FormattedDiscordMessage:
                  killmail_id: int,
                  killmail_data: typing.Dict[str, typing.Any],
                  attackers_data: typing.List[typing.Dict[str, typing.Any]],
+                 solo_attacker: typing.Optional[typing.Dict[str, typing.Any]],
                  tracked_corporation_ids: typing.List[int]):
         self.contents: typing.Optional[str] = None
         self.embed: typing.Optional[discord.Embed] = None
         self.__killmail_id: int = killmail_id
         self.__killmail_data: typing.Dict[str, typing.Any] = killmail_data
         self.__attackers_data: typing.List[typing.Dict[str, typing.Any]] = attackers_data
+        self.__solo_attacker: typing.Optional[typing.Dict[str, typing.Any]] = solo_attacker
         self.format(tracked_corporation_ids)
 
-    def format(self,
-               tracked_corporation_ids: typing.List[int]) -> None:
+    def format(self, tracked_corporation_ids: typing.List[int]) -> None:
         attacker_corps: typing.List[typing.Dict[str, typing.Any]] = self.__attackers_data
         zkb: typing.Dict[str, typing.Any] = self.__killmail_data['zkb']
         solar_system: typing.Dict[str, typing.Any] = self.__killmail_data['solar_system']
@@ -27,7 +28,6 @@ class FormattedDiscordMessage:
         loss: bool = victim.get('corporation_id', 0) in tracked_corporation_ids
         attacker_pilots_qty: int = sum([_['corp']['pilots'] for _ in attacker_corps])
         solo: bool = attacker_pilots_qty == 1
-        solo_attacker_id: typing.Optional[int] = None  # TODO: if not solo else attacker_pilots[0]['character_id']
         final_character_id: typing.Optional[int] = final_blow.get('id')
         final_ship_name: typing.Optional[int] = final_blow.get('ship')
 
@@ -37,26 +37,30 @@ class FormattedDiscordMessage:
         #  * solo_attacker-пилот не является неписью
 
         # см. про расположение элементов в embed-е тут: https://guide.disnake.dev/popular-topics/embeds
-        if solo:
-            solo_attacker_name: str = str(solo_attacker_id)  # TODO:
+        if solo and self.__solo_attacker:
+            solo_attacker_id: int = self.__solo_attacker.get('character_id')
+            solo_attacker_name: str = self.__solo_attacker.get('character_name', str(solo_attacker_id))
+            # Бой был выигран в соло пилотом Qandra Si
             attackers_txt: str = \
                 f"Бой был выигран в соло пилотом" \
                 f" [{solo_attacker_name}](https://zkillboard.com/character/{solo_attacker_id}/)"
+            solo_ship_name: int = self.__solo_attacker.get('ship_name')
+            if solo_ship_name:
+                # Бой был выигран в соло пилотом Qandra Si на Tristan
+                attackers_txt += f" на **{solo_ship_name}**"
         else:
             attackers_txt: str = "Окончательный удар нанёс"
             if final_character_id:
                 # Окончательный удар нанёс Qandra Si
                 final_character_name: str = final_blow.get('name', str(final_character_id))
                 attackers_txt += f" [{final_character_name}](https://zkillboard.com/character/{final_character_id}/)"
-
-        if final_ship_name:
-            if solo or final_ship_name is not None:
-                # Бой был выигран в соло пилотом Qandra Si на Tristan
-                # Окончательный удар нанёс Qandra Si на Tristan
-                attackers_txt += f" на **{final_ship_name}**"
-            else:
-                # Окончательный удар нанёс Tristan
-                attackers_txt += f" **{final_ship_name}**"
+            if final_ship_name:
+                if solo or final_ship_name is not None:
+                    # Окончательный удар нанёс Qandra Si на Tristan
+                    attackers_txt += f" на **{final_ship_name}**"
+                else:
+                    # Окончательный удар нанёс Tristan
+                    attackers_txt += f" **{final_ship_name}**"
         attackers_txt += "."
 
         if attacker_pilots_qty >= 2:

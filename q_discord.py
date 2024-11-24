@@ -49,10 +49,15 @@ class MyClient(discord.Client):
 
                     killmail_attackers: typing.List[typing.Dict[str, typing.Any]] = \
                         qzm.get_attackers_groups_by_killmail(killmail_id)
+                    killmail_solo_attacker: typing.Optional[typing.Dict[str, typing.Any]] = None
+                    if len(killmail_attackers) == 1 and killmail_attackers[0]['corp']['pilots'] == 1:
+                        killmail_solo_attacker = qzm.get_solo_attacker_by_killmail(killmail_id)
+
                     fdm: fmt.FormattedDiscordMessage = fmt.FormattedDiscordMessage(
                         killmail_id,
                         killmail_data,
                         killmail_attackers,
+                        killmail_solo_attacker,
                         q_settings.q_tracked_corporations)
                     if fdm.contents and fdm.embed:
                         await channel.send(content=fdm.contents, embed=fdm.embed)

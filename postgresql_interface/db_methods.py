@@ -312,6 +312,35 @@ group by
         # pilots not null
         return [{'corp': {'id': _[0], 'name': _[1], 'pilots': _[2]}} for _ in rows]
 
+    def get_solo_attacker_by_killmail(self, killmail_id: int) -> typing.Optional[typing.Dict[str, typing.Any]]:
+        rows = self.db.select_all_rows("""
+select
+ a_alliance_id as alliance_id,--0
+ a_character_id as character_id,--1
+ sch.ech_name as character_name,--2
+ a_corporation_id as corporation_id,--3
+ sco.eco_name as corporation_name,--4
+ a_ship_type_id as ship_type_id,--5
+ sst.sdet_type_name as ship_name --6
+from
+ qz.attackers as solo
+  left outer join esi_characters as sch on (sch.ech_character_id=solo.a_character_id)
+  left outer join esi_corporations as sco on (sco.eco_corporation_id=solo.a_corporation_id)
+  left outer join eve_sde_type_ids as sst on (sst.sdet_type_id=solo.a_ship_type_id)
+where
+ a_character_id is not null and
+ a_killmail_id=%(id)s;""",
+            {'id': killmail_id})
+        if rows is None:
+            return None
+        return {'alliance_id': rows[0][0],
+                'character_id': rows[0][1],
+                'character_name': rows[0][2],
+                'corporation_id': rows[0][3],
+                'corporation_name': rows[0][4],
+                'ship_type_id': rows[0][5],
+                'ship_name': rows[0][6]}
+
     def mark_killmail_as_published(self, killmail_id: int) -> None:
         self.db.execute(
             "INSERT INTO published(p_killmail_id)"
