@@ -248,3 +248,230 @@ class QZKBotMethods:
             "VALUES(%(id)s);",
             {'id': killmail_id}
         )
+
+    # -------------------------------------------------------------------------
+    # [common]
+    # -------------------------------------------------------------------------
+
+    def get_absent_ids(self, ids: typing.Set[int], table: str, field: str) -> typing.List[int]:
+        """
+        :param ids: list of unique identities to compare with ids, stored in the database
+        :param table: table name
+        :param field: field name
+        :return: list of ids which are not in the database
+        """
+        aids = self.db.select_all_rows(
+            "SELECT id FROM UNNEST(%s) AS a(id) "
+            "WHERE id NOT IN (SELECT {f} FROM {t});".format(t=table, f=field),
+            list(ids)
+        )
+        return [int(_[0]) for _ in aids] if aids is not None else []
+
+    # -------------------------------------------------------------------------
+    # characters/{character_id}/
+    # /universe/names/
+    # -------------------------------------------------------------------------
+
+    def get_absent_character_ids(self, ids: typing.Set[int]) -> typing.List[int]:
+        absent: typing.List[int] = self.get_absent_ids(ids, "esi_characters", "ech_character_id")
+        return absent
+
+    def insert_or_update_character(self, id: int, data, updated_at):
+        """ inserts character data into database
+
+        :param id: unique character id
+        :param data: character data
+        :param updated_at: :class:`datetime.datetime`
+        """
+        # { "alliance_id": 99010134,
+        #   "ancestry_id": 4,
+        #   "birthday": "2009-08-19T19:23:00Z",
+        #   "bloodline_id": 6,
+        #   "corporation_id": 98553333,
+        #   "description": "...",
+        #   "gender": "male",
+        #   "name": "olegez",
+        #   "race_id": 4,
+        #   "security_status": 3.960657443
+        #  }
+        #  { "category": "character",
+        #    "id": 2116746261,
+        #    "name": "Kekuit Void"
+        #  }
+        self.db.execute(
+            "INSERT INTO esi_characters("
+            " ech_character_id,"
+            " ech_name,"
+            " ech_created_at,"
+            " ech_updated_at) "
+            "VALUES("
+            " %(id)s,"
+            " %(nm)s,"
+            " CURRENT_TIMESTAMP AT TIME ZONE 'GMT',"
+            " TIMESTAMP WITHOUT TIME ZONE %(at)s) "
+            "ON CONFLICT ON CONSTRAINT pk_ech DO UPDATE SET"
+            " ech_name=%(nm)s,"
+            " ech_updated_at=TIMESTAMP WITHOUT TIME ZONE %(at)s;",
+            {'id': id,
+             'nm': data['name'],
+             'at': updated_at,
+             }
+        )
+
+    # -------------------------------------------------------------------------
+    # corporations/{corporation_id}/
+    # /universe/names/
+    # -------------------------------------------------------------------------
+
+    def get_absent_corporation_ids(self, ids: typing.Set[int]) -> typing.List[int]:
+        absent: typing.List[int] = self.get_absent_ids(ids, "esi_corporations", "eco_corporation_id")
+        return absent
+
+    def insert_or_update_corporation(self, id: int, data, updated_at):
+        """ inserts corporation data into database
+
+        :param id: unique corporation id
+        :param data: corporation data
+        :param updated_at: :class:`datetime.datetime`
+        """
+        # { "alliance_id": 99007203,
+        #   "ceo_id": 93531267,
+        #   "creator_id": 93362315,
+        #   "date_founded": "2019-09-27T20:27:54Z",
+        #   "description": "...",
+        #   "home_station_id": 60003064,
+        #   "member_count": 215,
+        #   "name": "R Initiative 4",
+        #   "shares": 1000,
+        #   "tax_rate": 0.1,
+        #   "ticker": "RI4",
+        #   "url": "",
+        #   "war_eligible": true
+        #  }
+        #  { "category": "corporation",
+        #    "id": 787611831,
+        #    "name": "Warriors tribe"
+        #  }
+        self.db.execute(
+            "INSERT INTO esi_corporations("
+            " eco_corporation_id,"
+            " eco_name,"
+            " eco_created_at,"
+            " eco_updated_at) "
+            "VALUES ("
+            " %(id)s,"
+            " %(nm)s,"
+            " CURRENT_TIMESTAMP AT TIME ZONE 'GMT',"
+            " TIMESTAMP WITHOUT TIME ZONE %(at)s) "
+            "ON CONFLICT ON CONSTRAINT pk_eco DO UPDATE SET"
+            " eco_name=%(nm)s,"
+            " eco_updated_at=TIMESTAMP WITHOUT TIME ZONE %(at)s;",
+            {'id': id,
+             'nm': data['name'],
+             'at': updated_at,
+             }
+        )
+
+    # -------------------------------------------------------------------------
+    # /alliances/{alliance_id}/
+    # /universe/names/
+    # -------------------------------------------------------------------------
+
+    def get_absent_alliance_ids(self, ids: typing.Set[int]) -> typing.List[int]:
+        absent: typing.List[int] = self.get_absent_ids(ids, "esi_alliances", "eal_alliance_id")
+        return absent
+
+    def insert_or_update_alliance(self, id: int, data, updated_at):
+        """ inserts aliance data into database
+
+        :param id: unique aliance id
+        :param data: aliance data
+        :param updated_at: :class:`datetime.datetime`
+        """
+        # { "creator_corporation_id": 98487467,
+        #   "creator_id": 91251672,
+        #   "date_founded": "2023-12-30T21:23:18Z",
+        #   "executor_corporation_id": 98549274,
+        #   "name": "Ragequit Cancel Sub",
+        #   "ticker": "DEBUG"
+        #  }
+        #  { "category": "alliance",
+        #    "id": 99012896,
+        #    "name": "Ragequit Cancel Sub"
+        #  }
+        self.db.execute(
+            "INSERT INTO esi_alliances("
+            " eal_alliance_id,"
+            " eal_name,"
+            " eal_created_at,"
+            " eal_updated_at) "
+            "VALUES ("
+            " %(id)s,"
+            " %(nm)s,"
+            " CURRENT_TIMESTAMP AT TIME ZONE 'GMT',"
+            " TIMESTAMP WITHOUT TIME ZONE %(at)s) "
+            "ON CONFLICT ON CONSTRAINT pk_eal DO UPDATE SET"
+            " eal_name=%(nm)s,"
+            " eal_updated_at=TIMESTAMP WITHOUT TIME ZONE %(at)s;",
+            {'id': id,
+             'nm': data['name'],
+             'at': updated_at,
+             }
+        )
+
+    # -------------------------------------------------------------------------
+    # /universe/types/
+    # /universe/types/{type_id}/
+    # /universe/names/
+    # -------------------------------------------------------------------------
+
+    def get_absent_type_ids(self, ids: typing.Set[int]) -> typing.List[int]:
+        absent: typing.List[int] = self.get_absent_ids(ids, "eve_sde_type_ids", "sdet_type_id")
+        return absent
+
+    def insert_or_update_type_id(self, type_id: int, data, updated_at):
+        """ inserts type_id' data into database
+
+        :param data: item type market history data
+        """
+        # { "capacity": 0,
+        #   "description": "Contains stylish 'Imperial Loyalist' pants for both men and women to celebrate Foundation Day YC123.",
+        #   "group_id": 1194,
+        #   "icon_id": 24297,
+        #   "mass": 0,
+        #   "name": "Amarr Foundation Day Pants Crate",
+        #   "packaged_volume": 0.1,
+        #   "portion_size": 1,
+        #   "published": true,
+        #   "radius": 1,
+        #   "type_id": 59978,
+        #   "volume": 0.1
+        # }
+        # { "category": "inventory_type",
+        #   "id": 47270,
+        #   "name": "Vedmak"
+        # }
+        self.db.execute(
+            "INSERT INTO eve_sde_type_ids("
+            " sdet_type_id,"
+            " sdet_type_name,"
+            " sdet_published,"
+            " sdet_icon_id,"
+            " sdet_created_at) "
+            "VALUES ("
+            " %(t)s,"
+            " %(nm)s,"
+            " %(p)s,"
+            " %(i)s,"
+            " TIMESTAMP WITHOUT TIME ZONE %(at)s) "
+            "ON CONFLICT ON CONSTRAINT pk_sdet DO UPDATE SET"
+            " sdet_type_name=%(nm)s,"
+            " sdet_published=%(p)s,"
+            " sdet_icon_id=%(i)s;",
+            {'t': type_id,
+             'nm': data['name'],
+             'p': data.get('published', None),
+             'i': data.get('icon_id', None),
+             'at': updated_at
+             }
+        )

@@ -140,11 +140,86 @@ def main():
         for killmail_id, killmail_hash in unrelated_killmails:
             # Public information
             killmail_data = esi_interface.get_esi_data(f"killmails/{killmail_id}/{killmail_hash}/")
-            print(f"New killmail {killmail_id} with {len(killmail_data['attackers'])} attackers and {killmail_data['victim'].get('character_id')} victim")
             sys.stdout.flush()
 
+            alliances: typing.Set[int] = set()
+            corporations: typing.Set[int] = set()
+            characters: typing.Set[int] = set()
+            type_ids: typing.Set[int] = set()
+
+            victim: typing.Dict[str, typing.Any] = killmail_data['victim']
+            if 'alliance_id' in victim:
+                alliances.add(victim['alliance_id'])
+            if 'corporation_id' in victim:
+                corporations.add(victim['corporation_id'])
+            if 'character_id' in victim:
+                characters.add(victim['character_id'])
+            type_ids.add(victim['ship_type_id'])
+
+            attackers: typing.List[typing.Dict[str, typing.Any]] = killmail_data['attackers']
+            for a in attackers:
+                if 'alliance_id' in a:
+                    alliances.add(a['alliance_id'])
+                if 'corporation_id' in a:
+                    corporations.add(a['corporation_id'])
+                if 'character_id' in a:
+                    characters.add(a['character_id'])
+                if 'ship_type_id' in a:
+                    type_ids.add(a['ship_type_id'])
+
+            if alliances:
+                alliances: typing.List[int] = qzm.get_absent_alliance_ids(alliances)
+                for alliance_id in alliances:
+                    # Public information about an alliance
+                    alliance_data = esi_interface.get_esi_data(
+                        url=f"alliances/{alliance_id}/",
+                        fully_trust_cache=True)
+                    sys.stdout.flush()
+
+                    if alliance_data:
+                        qzm.insert_or_update_alliance(alliance_id, alliance_data, at)
+
+            if corporations:
+                corporations: typing.List[int] = qzm.get_absent_corporation_ids(corporations)
+                for corporation_id in corporations:
+                    # Public information about a corporation
+                    corporation_data = esi_interface.get_esi_data(
+                        url=f"corporations/{corporation_id}/",
+                        fully_trust_cache=True)
+                    sys.stdout.flush()
+
+                    if corporation_data:
+                        qzm.insert_or_update_corporation(corporation_id, corporation_data, at)
+
+            if characters:
+                characters: typing.List[int] = qzm.get_absent_character_ids(characters)
+                for character_id in characters:
+                    # Public information about a character
+                    character_data = esi_interface.get_esi_data(
+                        url=f"characters/{character_id}/",
+                        fully_trust_cache=True)
+                    sys.stdout.flush()
+
+                    if character_data:
+                        qzm.insert_or_update_character(character_id, character_data, at)
+
+            if type_ids:
+                type_ids: typing.List[int] = qzm.get_absent_type_ids(type_ids)
+                for type_id in type_ids:
+                    # Public information about a type_id
+                    type_data = esi_interface.get_esi_data(
+                        url=f"universe/types/{type_id}/",
+                        fully_trust_cache=True)
+                    sys.stdout.flush()
+
+                    if type_data:
+                        qzm.insert_or_update_type_id(type_id, type_data, at)
+
             qzm.insert_into_killmails(killmail_id, killmail_data)
-        qzdb.commit()
+            qzdb.commit()
+
+            print(f"New killmail {killmail_id} with {len(killmail_data['attackers'])} attackers and {killmail_data['victim'].get('character_id')} victim\n")
+            sys.stdout.flush()
 
         qzm.mark_all_killmails_as_published_if_none()
         qzdb.commit()

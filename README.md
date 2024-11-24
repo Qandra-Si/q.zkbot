@@ -22,6 +22,7 @@ git submodule init
 git submodule update --recursive
 
 # выполни скрипты настройки БД в директории database
+# при переключении на новую версию программы выполни update-скрипты
 
 cp q_settings.py.template q_settings.py
 # отредактируй q_settings.py
