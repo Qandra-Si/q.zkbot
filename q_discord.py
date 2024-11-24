@@ -1,10 +1,12 @@
 import typing
+import json
 import http.client
 import discord
 from discord.ext import tasks
 
 import postgresql_interface as db
 import q_settings
+import q_killmail_formatter as fmt
 
 
 def is_killmail_ready_on_zkillboard(killmail_id: int) -> bool:
@@ -33,12 +35,21 @@ class MyClient(discord.Client):
             qzdb: db.QZKBotDatabase = db.QZKBotDatabase(debug=False)
             qzdb.connect(q_settings.g_database)
             qzm: db.QZKBotMethods = db.QZKBotMethods(qzdb)
-            non_published: typing.List[int] = qzm.get_all_non_published_killmails()
+            non_published: typing.List[typing.Tuple[int, str]] = qzm.get_all_non_published_killmails()
             if non_published:
                 is_any_ready: bool = False
-                for killmail_id in non_published:
+                for killmail_id, killmail_hash in non_published:
                     if is_killmail_ready_on_zkillboard(killmail_id):
-                        await channel.send(f'https://zkillboard.com/kill/{killmail_id}/')
+                        fdm: fmt.FormattedDiscordMessage = fmt.FormattedDiscordMessage(
+                            killmail_id,
+                            killmail_hash,
+                            q_settings.q_tracked_corporations,
+                            ".q_zkbot/esi_cache")
+                        if fdm.contents and fdm.embed:
+                            await channel.send(content=fdm.contents, embed=fdm.embed)
+                        else:
+                            await channel.send(f"https://zkillboard.com/kill/{killmail_id}/")
+                        del fdm
                         qzm.mark_killmail_as_published(killmail_id)
                         is_any_ready = True
                 if is_any_ready:

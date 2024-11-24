@@ -1,3 +1,5 @@
+import typing
+
 g_discord_token: str = '000000000000000000000000000000000000000000000000000000000000000000000000'  # <-- this is the value you need to edit
 q_discord_channel: int = 0000000000000000000  # <-- this is the value you need to edit
 
@@ -28,3 +30,5 @@ g_database = {
     "user":     "qz_user",
     "password": "qz_LAZ7dBLmSJb9"  # <-- this is the value you probably need to edit
 }
+
+q_tracked_corporations: typing.List[int] = [000000000]  # <-- this is the value you need to edit
