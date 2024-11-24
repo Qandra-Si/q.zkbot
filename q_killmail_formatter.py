@@ -114,7 +114,7 @@ class FormattedDiscordMessage:
             else:
                 victim_txt += f" стоимостью **{worth/1000000000.0:,.2f}b** ISK."
 
-        datetime_txt: str = self.__killmail_data['time']
+        datetime_txt: str = str(self.__killmail_data['time'])
         datetime_txt = f"{datetime_txt[:10]} {datetime_txt[11:16]}"
         footer_txt: str = datetime_txt
         if zkb.get('points', 0):
