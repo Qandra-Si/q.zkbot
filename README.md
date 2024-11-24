@@ -37,7 +37,7 @@ python3 -m venv .venv
 Добавить в `crontab -e` команду:
 
 ```bash
-*/5 * * * * /usr/bin/flock -w 0 /tmp/qzkbot-fast.lockfile /home/user/q_zkbot/run-5minutes.sh >> /tmp/tmp-qz.cron 2>&1
+*/5 * * * * /usr/bin/flock -w 0 /tmp/qzkbot.lockfile /path/to/q_zkbot/run-5minutes.sh "Qandra Si" >> /tmp/tmp-qzkbot.cron 2>&1
 ```
 
 Запустить в `screen` команду:

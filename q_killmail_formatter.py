@@ -18,76 +18,68 @@ class FormattedDiscordMessage:
 
     def format(self,
                tracked_corporation_ids: typing.List[int]) -> None:
-        attackers: typing.List[typing.Dict[str, typing.Any]] = km['attackers']
+        attacker_corps: typing.List[typing.Dict[str, typing.Any]] = self.__attackers_data
         zkb: typing.Dict[str, typing.Any] = self.__killmail_data['zkb']
         solar_system: typing.Dict[str, typing.Any] = self.__killmail_data['solar_system']
         victim: typing.Dict[str, typing.Any] = self.__killmail_data['victim']
+        final_blow: typing.Dict[str, typing.Any] = self.__killmail_data['final_blow']
 
         loss: bool = victim.get('corporation_id', 0) in tracked_corporation_ids
-        attacker_pilots: typing.List[typing.Dict[str, typing.Any]] = [_ for _ in attackers if 'character_id' in _]
-        attacker_pilots_len: int = len(attacker_pilots)
-        solo: bool = attacker_pilots_len == 1
-        solo_attacker_id: typing.Optional[int] = None if not solo else attacker_pilots[0]['character_id']
-        final_character_id: typing.Optional[int] = None
-        final_ship_type_id: typing.Optional[int] = None
-        final_blow_attacker: typing.Optional[typing.Dict[str, typing.Any]] = \
-            next((_ for _ in attackers if _['final_blow']), None)
-        if final_blow_attacker:
-            final_character_id = final_blow_attacker.get('character_id')
-            final_ship_type_id = final_blow_attacker.get('ship_type_id')
+        attacker_pilots_qty: int = sum([_['corp']['pilots'] for _ in attacker_corps])
+        solo: bool = attacker_pilots_qty == 1
+        solo_attacker_id: typing.Optional[int] = None  # TODO: if not solo else attacker_pilots[0]['character_id']
+        final_character_id: typing.Optional[int] = final_blow.get('id')
+        final_ship_name: typing.Optional[int] = final_blow.get('ship')
+
+        # Внимание!
+        #  * solo выставляется, если атакующий пилот был один (непись не учитывается)
+        #  * final_blow-пилот может быть неписью
+        #  * solo_attacker-пилот не является неписью
 
         # см. про расположение элементов в embed-е тут: https://guide.disnake.dev/popular-topics/embeds
         if solo:
             solo_attacker_name: str = str(solo_attacker_id)  # TODO:
             attackers_txt: str = \
-                f"Окончательный удар в соло нанёс" \
+                f"Бой был выигран в соло пилотом" \
                 f" [{solo_attacker_name}](https://zkillboard.com/character/{solo_attacker_id}/)"
         else:
             attackers_txt: str = "Окончательный удар нанёс"
-            if final_blow_attacker is None:
-                attackers_txt += "? "
-            elif final_character_id:
-                final_character_name: str = str(final_character_id)  # TODO:
+            if final_character_id:
+                # Окончательный удар нанёс Qandra Si
+                final_character_name: str = final_blow.get('name', str(final_character_id))
                 attackers_txt += f" [{final_character_name}](https://zkillboard.com/character/{final_character_id}/)"
 
-        if final_ship_type_id:
-            ship_type_name: str = str(final_ship_type_id)  # TODO:
-            if solo or final_character_id is not None:
-                # Окончательный удар в соло нанёс Qandra Si на Tristan
+        if final_ship_name:
+            if solo or final_ship_name is not None:
+                # Бой был выигран в соло пилотом Qandra Si на Tristan
                 # Окончательный удар нанёс Qandra Si на Tristan
-                attackers_txt += f" на **{ship_type_name}**"
+                attackers_txt += f" на **{final_ship_name}**"
             else:
                 # Окончательный удар нанёс Tristan
-                attackers_txt += f" **{ship_type_name}**"
+                attackers_txt += f" **{final_ship_name}**"
         attackers_txt += "."
 
-        if attacker_pilots_len >= 2:
-            attackers_txt += f"\nАтакующие: {attacker_pilots_len}"
-            corporations: typing.Dict[int, int] = {}
-            for a in attacker_pilots:
-                corporation_id: typing.Optional[int] = a.get('corporation_id')
-                if corporation_id is not None:
-                    if corporation_id in corporations:
-                        corporations[corporation_id] += 1
-                    else:
-                        corporations[corporation_id] = 1
-            corporations_len: int = len(corporations)
-            if corporations_len == 1:
+        if attacker_pilots_qty >= 2:
+            attackers_txt += f"\nАтакующие: {attacker_pilots_qty}"
+            attacker_corps_len: int = len(attacker_corps)
+            if attacker_corps_len == 1:
                 # Атакующие: (2) из Warriors tribe
-                corporation_id: int = list(corporations.keys())[0]
-                corporation_name: str = str(corporation_id)  # TODO:
+                corp: typing.Dict[str, typing.Any] = attacker_corps[0]['corp']
+                corporation_id: int = corp['id']
+                corporation_name: str = corp.get('name', str(corporation_id))
                 attackers_txt += f" из [{corporation_name}](https://zkillboard.com/corporation/{corporation_id}/)"
-            elif corporations_len >= 2:
-                sorted_corporations: typing.List[typing.Tuple[int, int]] = [(_[0], _[1]) for _ in corporations.items()]
-                sorted_corporations.sort(key=lambda _: _[1], reverse=True)
-                if sorted_corporations[0][1] > sorted_corporations[1][1]:
-                    # Атакующие: (5) основная группа из Warriors tribe
-                    corporation_id: int = sorted_corporations[0][0]
-                    corporation_name: str = str(corporation_id)  # TODO:
+            elif attacker_corps_len >= 2:
+                sorted_corps: typing.List[typing.Dict[str, typing.Any]] = [_['corp'] for _ in attacker_corps]
+                sorted_corps.sort(key=lambda _: _['pilots'], reverse=True)
+                if sorted_corps[0]['pilots'] > sorted_corps[1]['pilots']:
+                    # Атакующие: (5), основная группа из Warriors tribe
+                    corp: typing.Dict[str, typing.Any] = sorted_corps[0]
+                    corporation_id: int = corp['id']
+                    corporation_name: str = corp.get('name', str(corporation_id))
                     attackers_txt += \
                         ", основная группа из " \
                         f"[{corporation_name}](https://zkillboard.com/corporation/{corporation_id}/) " \
-                        f"({sorted_corporations[0][1]})"
+                        f"({corp['pilots']})"
             attackers_txt += "."
 
         victim_character_id: typing.Optional[int] = victim.get('character_id')
@@ -116,11 +108,11 @@ class FormattedDiscordMessage:
         worth: typing.Optional[float] = zkb.get('worth')
         if worth:
             if worth < 1000000.0:
-                victim_txt += f" стоимостью **{worth/1000.0:.2f}k** ISK."  # TODO:
+                victim_txt += f" стоимостью **{worth/1000.0:.2f}k** ISK."
             elif worth < 1000000000.0:
-                victim_txt += f" стоимостью **{worth/1000000.0:.2f}m** ISK."  # TODO:
+                victim_txt += f" стоимостью **{worth/1000000.0:.2f}m** ISK."
             else:
-                victim_txt += f" стоимостью **{worth/1000000000.0:,.2f}b** ISK."  # TODO:
+                victim_txt += f" стоимостью **{worth/1000000000.0:,.2f}b** ISK."
 
         datetime_txt: str = self.__killmail_data['time']
         datetime_txt = f"{datetime_txt[:10]} {datetime_txt[11:16]}"

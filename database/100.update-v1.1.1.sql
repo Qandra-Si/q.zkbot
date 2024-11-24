@@ -25,9 +25,6 @@ DROP TABLE IF EXISTS qz.esi_corporations;
 DROP INDEX IF EXISTS idx_ech_pk;
 DROP TABLE IF EXISTS qz.esi_characters;
 
-DROP INDEX IF EXISTS idx_pk_p;
-DROP TABLE IF EXISTS qz.published;
-
 --------------------------------------------------------------------------------
 -- esi_characters
 -- справочник со списком пилотов

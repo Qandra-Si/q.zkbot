@@ -300,6 +300,7 @@ from
  attackers as a
   left outer join esi_corporations as co on (co.eco_corporation_id=a.a_corporation_id)
 where
+ a.a_character_id is not null and
  a.a_killmail_id=%(id)s
 group by
  a.a_corporation_id,
