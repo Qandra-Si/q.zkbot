@@ -382,10 +382,10 @@ class QZKBotMethods:
         return absent
 
     def insert_or_update_alliance(self, id: int, data, updated_at):
-        """ inserts aliance data into database
+        """ inserts alliance data into database
 
-        :param id: unique aliance id
-        :param data: aliance data
+        :param id: unique alliance id
+        :param data: alliance data
         :param updated_at: :class:`datetime.datetime`
         """
         # { "creator_corporation_id": 98487467,
@@ -473,5 +473,228 @@ class QZKBotMethods:
              'p': data.get('published', None),
              'i': data.get('icon_id', None),
              'at': updated_at
+             }
+        )
+
+    # -------------------------------------------------------------------------
+    # /universe/regions/{region_id}/
+    # -------------------------------------------------------------------------
+
+    def get_absent_region_ids(self, ids: typing.Set[int]) -> typing.List[int]:
+        absent: typing.List[int] = self.get_absent_ids(ids, "esi_regions", "esr_region_id")
+        return absent
+
+    def insert_or_update_region(self, id: int, data, updated_at):
+        """ inserts region data into database
+
+        :param id: unique region id
+        :param data: region data
+        :param updated_at: :class:`datetime.datetime`
+        """
+        # { "constellations": [
+        #     20000448,
+        #     20000449,
+        #     20000450,
+        #     20000451,
+        #     20000452
+        #   ],
+        #   "description": "...",
+        #   "name": "The Bleak Lands",
+        #   "region_id": 10000038
+        # }
+        # { "category": "region",
+        #   "id": 10000038,
+        #   "name": "The Bleak Lands"
+        # }
+        self.db.execute(
+            "INSERT INTO esi_regions("
+            " esr_region_id,"
+            " esr_name,"
+            " esr_created_at,"
+            " esr_updated_at) "
+            "VALUES ("
+            " %(id)s,"
+            " %(nm)s,"
+            " CURRENT_TIMESTAMP AT TIME ZONE 'GMT',"
+            " TIMESTAMP WITHOUT TIME ZONE %(at)s) "
+            "ON CONFLICT ON CONSTRAINT pk_esr DO UPDATE SET"
+            " esr_name=%(nm)s,"
+            " esr_updated_at=TIMESTAMP WITHOUT TIME ZONE %(at)s;",
+            {'id': id,
+             'nm': data['name'],
+             'at': updated_at,
+             }
+        )
+
+    # -------------------------------------------------------------------------
+    # /universe/constellations/{constellation_id}/
+    # -------------------------------------------------------------------------
+
+    def get_absent_constellation_ids(self, ids: typing.Set[int]) -> typing.List[int]:
+        absent: typing.List[int] = self.get_absent_ids(ids, "esi_constellations", "esc_constellation_id")
+        return absent
+
+    def insert_or_update_constellation(self, id: int, data, updated_at):
+        """ inserts constellation data into database
+
+        :param id: unique constellation id
+        :param data: constellation data
+        :param updated_at: :class:`datetime.datetime`
+        """
+        # { "constellation_id": 20000448,
+        #   "name": "Sasen",
+        #   "position": {
+        #     "x": -144877496800077570,
+        #     "y": 57858086119709010,
+        #     "z": -48618946556037704
+        #   },
+        #   "region_id": 10000038,
+        #   "systems": [
+        #     30003063,
+        #     30003064,
+        #     30003065,
+        #     30003066,
+        #     30003067,
+        #     30003068,
+        #     30003069
+        #   ]
+        # }
+        # { "category": "constellation",
+        #   "id": 20000448,
+        #   "name": "Sasen"
+        # }
+        self.db.execute(
+            "INSERT INTO esi_constellations("
+            " esc_constellation_id,"
+            " esc_name,"
+            " esc_position,"
+            " esc_region_id,"
+            " esc_created_at,"
+            " esc_updated_at) "
+            "VALUES ("
+            " %(id)s,"
+            " %(nm)s,"
+            " %(p)s,"
+            " %(r)s,"
+            " CURRENT_TIMESTAMP AT TIME ZONE 'GMT',"
+            " TIMESTAMP WITHOUT TIME ZONE %(at)s) "
+            "ON CONFLICT ON CONSTRAINT pk_esc DO UPDATE SET"
+            " esc_name=%(nm)s,"
+            " esc_position=%(p)s,"
+            " esc_region_id=%(r)s,"
+            " esc_updated_at=TIMESTAMP WITHOUT TIME ZONE %(at)s;",
+            {'id': id,
+             'nm': data['name'],
+             'p': [data['position']['x'], data['position']['y'], data['position']['z']],
+             'r': data['region_id'],
+             'at': updated_at,
+             }
+        )
+
+    # -------------------------------------------------------------------------
+    # /universe/systems/{system_id}/
+    # -------------------------------------------------------------------------
+
+    def get_absent_system_ids(self, ids: typing.Set[int]) -> typing.List[int]:
+        absent: typing.List[int] = self.get_absent_ids(ids, "esi_systems", "ess_system_id")
+        return absent
+
+    def insert_or_update_system(self, id: int, data, updated_at):
+        """ inserts system data into database
+
+        :param id: unique system id
+        :param data: system data
+        :param updated_at: :class:`datetime.datetime`
+        """
+        # { "constellation_id": 20000448,
+        #   "name": "Kourmonen",
+        #   "planets": [
+        #     {
+        #       "moons": [
+        #         40194991
+        #       ],
+        #       "planet_id": 40194990
+        #     },
+        #     {
+        #       "moons": [
+        #         40194993,40194994,40194995,40194996,40194997,40194998,40194999,40195000,
+        #         40195001,40195002,40195003
+        #       ],
+        #       "planet_id": 40194992
+        #     },
+        #     {
+        #       "moons": [
+        #         40195005,40195006,40195007,40195008,40195009,40195010,40195011,40195012,
+        #         40195013,40195014,40195015,40195016,40195017,40195018,40195019,40195020,
+        #         40195021,40195022,40195023
+        #       ],
+        #       "planet_id": 40195004
+        #     },
+        #     {
+        #       "moons": [
+        #         40195025,40195026,40195027,40195028,40195029,40195030,40195031,40195032,
+        #         40195033,40195034,40195035,40195036,40195037,40195038,40195039,40195040,
+        #         40195041,40195042,40195043,40195044,40195045,40195046,40195047
+        #       ],
+        #       "planet_id": 40195024
+        #     },
+        #     {
+        #       "asteroid_belts": [
+        #         40195049,40195052,40195053,40195054,40195067,40195071,40195073,40195077,
+        #         40195078,40195080,40195082
+        #       ],
+        #       "moons": [
+        #         40195050,40195051,40195055,40195056,40195057,40195058,40195059,40195060,
+        #         40195061,40195062,40195063,40195064,40195065,40195066,40195068,40195069,
+        #         40195070,40195072,40195074,40195075,40195076,40195079,40195081
+        #       ],
+        #       "planet_id": 40195048
+        #     }
+        #   ],
+        #   "position": {
+        #     "x": -137144866634971220,
+        #     "y": 42128767386892000,
+        #     "z": -32854011328645590
+        #   },
+        #   "security_class": "B2",
+        #   "security_status": 0.3634801506996155,
+        #   "star_id": 40194989,
+        #   "stargates": [
+        #     50001856,50001857,50001858,50014062
+        #   ],
+        #   "stations": [
+        #     60002200,60002206,60014563,60014566,60014569
+        #   ],
+        #   "system_id": 30003068
+        # }
+        # { "category": "solar_system",
+        #   "id": 30003068,
+        #   "name": "Kourmonen"
+        # }
+        self.db.execute(
+            "INSERT INTO esi_systems("
+            " ess_system_id,"
+            " ess_name,"
+            " ess_position,"
+            " ess_constellation_id,"
+            " ess_created_at,"
+            " ess_updated_at) "
+            "VALUES ("
+            " %(id)s,"
+            " %(nm)s,"
+            " %(p)s,"
+            " %(c)s,"
+            " CURRENT_TIMESTAMP AT TIME ZONE 'GMT',"
+            " TIMESTAMP WITHOUT TIME ZONE %(at)s) "
+            "ON CONFLICT ON CONSTRAINT pk_ess DO UPDATE SET"
+            " ess_name=%(nm)s,"
+            " ess_position=%(p)s,"
+            " ess_constellation_id=%(c)s,"
+            " ess_updated_at=TIMESTAMP WITHOUT TIME ZONE %(at)s;",
+            {'id': id,
+             'nm': data['name'],
+             'p': [data['position']['x'], data['position']['y'], data['position']['z']],
+             'c': data['constellation_id'],
+             'at': updated_at,
              }
         )

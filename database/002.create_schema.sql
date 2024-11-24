@@ -4,6 +4,17 @@
 
 CREATE SCHEMA IF NOT EXISTS qz AUTHORIZATION qz_user;
 
+DROP INDEX IF EXISTS idx_ess_constellation_id;
+DROP INDEX IF EXISTS idx_ess_pk;
+DROP TABLE IF EXISTS qz.esi_systems;
+
+DROP INDEX IF EXISTS idx_esc_region_id;
+DROP INDEX IF EXISTS idx_esc_pk;
+DROP TABLE IF EXISTS qz.esi_constellations;
+
+DROP INDEX IF EXISTS idx_esr_pk;
+DROP TABLE IF EXISTS qz.esi_regions;
+
 DROP INDEX IF EXISTS idx_sdet_created_at;
 DROP INDEX IF EXISTS idx_sdet_pk;
 DROP TABLE IF EXISTS qz.eve_sde_type_ids;
@@ -372,6 +383,90 @@ TABLESPACE pg_default;
 CREATE INDEX idx_sdet_created_at
     ON qz.eve_sde_type_ids USING btree
     (sdet_created_at ASC NULLS LAST)
+TABLESPACE pg_default;
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+-- esi_regions
+-- справочник со списком регионов
+--------------------------------------------------------------------------------
+CREATE TABLE qz.esi_regions (
+    esr_region_id BIGINT NOT NULL,
+    esr_name CHARACTER VARYING(255) NOT NULL,
+    -- description
+    esr_created_at TIMESTAMP,
+    esr_updated_at TIMESTAMP,
+    CONSTRAINT pk_esr PRIMARY KEY (esr_region_id)
+)
+TABLESPACE pg_default;
+
+ALTER TABLE qz.esi_regions OWNER TO qz_user;
+
+CREATE UNIQUE INDEX idx_esr_pk
+    ON qz.esi_regions USING btree
+    (esr_region_id ASC NULLS LAST)
+TABLESPACE pg_default;
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+-- esi_constellations
+-- справочник со списком созвездий
+--------------------------------------------------------------------------------
+CREATE TABLE qz.esi_constellations (
+    esc_constellation_id BIGINT NOT NULL,
+    esc_name CHARACTER VARYING(255) NOT NULL,
+    esc_position DOUBLE PRECISION[3] NOT NULL,
+    esc_region_id BIGINT NOT NULL,
+    esc_created_at TIMESTAMP,
+    esc_updated_at TIMESTAMP,
+    CONSTRAINT pk_esc PRIMARY KEY (esc_constellation_id)
+)
+TABLESPACE pg_default;
+
+ALTER TABLE qz.esi_constellations OWNER TO qz_user;
+
+CREATE UNIQUE INDEX idx_esc_pk
+    ON qz.esi_constellations USING btree
+    (esc_constellation_id ASC NULLS LAST)
+TABLESPACE pg_default;
+
+CREATE INDEX idx_esc_region_id
+    ON qz.esi_constellations USING btree
+    (esc_region_id ASC NULLS LAST)
+TABLESPACE pg_default;
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+-- esi_systems
+-- справочник со списком солнечных систем
+--------------------------------------------------------------------------------
+CREATE TABLE qz.esi_systems (
+    ess_system_id BIGINT NOT NULL,
+    ess_name CHARACTER VARYING(255) NOT NULL,
+    ess_position DOUBLE PRECISION[3] NOT NULL,
+    ess_constellation_id BIGINT NOT NULL,
+    -- star_id
+    -- planets
+    -- stations
+    -- stargates
+    -- security_status
+    -- security_class
+    ess_created_at TIMESTAMP,
+    ess_updated_at TIMESTAMP,
+    CONSTRAINT pk_ess PRIMARY KEY (ess_system_id)
+)
+TABLESPACE pg_default;
+
+ALTER TABLE qz.esi_systems OWNER TO qz_user;
+
+CREATE UNIQUE INDEX idx_ess_pk
+    ON qz.esi_systems USING btree
+    (ess_system_id ASC NULLS LAST)
+TABLESPACE pg_default;
+
+CREATE INDEX idx_ess_constellation_id
+    ON qz.esi_systems USING btree
+    (ess_constellation_id ASC NULLS LAST)
 TABLESPACE pg_default;
 --------------------------------------------------------------------------------
 

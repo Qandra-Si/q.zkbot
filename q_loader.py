@@ -146,6 +146,7 @@ def main():
             corporations: typing.Set[int] = set()
             characters: typing.Set[int] = set()
             type_ids: typing.Set[int] = set()
+            solar_system_id: int = int(killmail_data['solar_system_id'])
 
             victim: typing.Dict[str, typing.Any] = killmail_data['victim']
             if 'alliance_id' in victim:
@@ -214,6 +215,38 @@ def main():
 
                     if type_data:
                         qzm.insert_or_update_type_id(type_id, type_data, at)
+
+            if qzm.get_absent_system_ids({solar_system_id}):
+                # Public information about a solar system
+                system_data = esi_interface.get_esi_data(
+                    url=f"universe/systems/{solar_system_id}/",
+                    fully_trust_cache=True)
+                sys.stdout.flush()
+
+                if system_data:
+                    qzm.insert_or_update_system(solar_system_id, system_data, at)
+
+                    constellation_id: int = system_data['constellation_id']
+                    if qzm.get_absent_constellation_ids({constellation_id}):
+                        # Public information about a constellation
+                        constellation_data = esi_interface.get_esi_data(
+                            url=f"universe/constellations/{constellation_id}/",
+                            fully_trust_cache=True)
+                        sys.stdout.flush()
+
+                        if constellation_data:
+                            qzm.insert_or_update_constellation(constellation_id, constellation_data, at)
+
+                            region_id: int = constellation_data['region_id']
+                            if qzm.get_absent_region_ids({region_id}):
+                                # Public information about a region
+                                region_data = esi_interface.get_esi_data(
+                                    url=f"universe/regions/{region_id}/",
+                                    fully_trust_cache=True)
+                                sys.stdout.flush()
+
+                                if region_data:
+                                    qzm.insert_or_update_region(region_id, region_data, at)
 
             qzm.insert_into_killmails(killmail_id, killmail_data)
             qzdb.commit()
