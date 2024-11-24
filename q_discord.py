@@ -9,11 +9,11 @@ import q_settings
 import q_killmail_formatter as fmt
 
 
-def is_killmail_ready_on_zkillboard(killmail_id: int) -> bool:
+def is_killmail_ready_on_zkillboard(killmail_id: int) -> typing.Tuple[bool, int, str]:
     conn = http.client.HTTPSConnection("zkillboard.com")
     conn.request("GET", f"/kill/{killmail_id}/")
     res = conn.getresponse()
-    return res.status != 404  # если всё что угодно, но не "404 Not Found", то публикуем
+    return res.status != 404, res.status, res.reason  # если всё что угодно, но не "404 Not Found", то публикуем
 
 
 class MyClient(discord.Client):
@@ -41,7 +41,8 @@ class MyClient(discord.Client):
                 for zkb_data in non_published:
                     killmail_id: int = zkb_data['id']
                     killmail_hash: str = zkb_data['hash']
-                    if is_killmail_ready_on_zkillboard(killmail_id):
+                    ready, status, reason = is_killmail_ready_on_zkillboard(killmail_id)
+                    if ready:
                         worth: typing.Optional[float] = zkb_data.get('worth')
                         print(f'Publishing killmail {killmail_id} (worth: {worth})')
                         fdm: fmt.FormattedDiscordMessage = fmt.FormattedDiscordMessage(
@@ -58,7 +59,7 @@ class MyClient(discord.Client):
                         qzm.mark_killmail_as_published(killmail_id)
                         is_any_ready = True
                     else:
-                        print(f'Can\'t publish killmail {killmail_id}, not ready')
+                        print(f'Can\'t publish killmail {killmail_id}: {status} {reason}')
                 if is_any_ready:
                     qzdb.commit()
             del qzm
