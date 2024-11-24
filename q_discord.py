@@ -35,14 +35,17 @@ class MyClient(discord.Client):
             qzdb: db.QZKBotDatabase = db.QZKBotDatabase(debug=False)
             qzdb.connect(q_settings.g_database)
             qzm: db.QZKBotMethods = db.QZKBotMethods(qzdb)
-            non_published: typing.List[typing.Tuple[int, str]] = qzm.get_all_non_published_killmails()
+            non_published: typing.List[typing.Dict[str, typing.Any]] = qzm.get_all_non_published_killmails()
             if non_published:
                 is_any_ready: bool = False
-                for killmail_id, killmail_hash in non_published:
+                for zkb_data in non_published:
+                    killmail_id: int = zkb_data['id']
+                    killmail_hash: str = zkb_data['hash']
                     if is_killmail_ready_on_zkillboard(killmail_id):
                         fdm: fmt.FormattedDiscordMessage = fmt.FormattedDiscordMessage(
                             killmail_id,
                             killmail_hash,
+                            zkb_data,
                             q_settings.q_tracked_corporations,
                             ".q_zkbot/esi_cache")
                         if fdm.contents and fdm.embed:

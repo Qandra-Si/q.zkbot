@@ -214,9 +214,16 @@ class QZKBotMethods:
             " where 0 = (select count(1) from published);"
         )
 
-    def get_all_non_published_killmails(self) -> typing.List[typing.Tuple[int, str]]:
+    def get_all_non_published_killmails(self) -> typing.List[typing.Dict[str, typing.Any]]:
         rows = self.db.select_all_rows(
-            "SELECT km_id, zkm_hash "
+            "SELECT"
+            " km_id,"
+            " zkm_hash,"
+            " zkm_total_value,"
+            " zkm_points,"
+            " zkm_npc,"
+            " zkm_solo,"
+            " zkm_awox "
             "FROM killmails, zkillmails "
             "WHERE"
             " km_id NOT IN (SELECT p_killmail_id FROM published) AND"
@@ -225,7 +232,15 @@ class QZKBotMethods:
         )
         if rows is None:
             return []
-        return [(int(_[0]), _[1]) for _ in rows]
+        return [{
+            'id': int(_[0]),  # not null
+            'hash': _[1],  # not null
+            'worth': _[2],
+            'points': _[3],
+            'npc': _[4],
+            'solo': _[5],
+            'awox': _[6]
+        } for _ in rows]
 
     def mark_killmail_as_published(self, killmail_id: int) -> None:
         self.db.execute(
