@@ -118,11 +118,11 @@ class FormattedDiscordMessage:
         worth: typing.Optional[float] = zkb.get('worth')
         if worth:
             if worth < 1000000.0:
-                victim_txt += f" стоимостью **{worth/1000.0:.2f}k** ISK."
+                victim_txt += f" стоимостью **{worth/1000.0:.2f}k** ISK"
             elif worth < 1000000000.0:
-                victim_txt += f" стоимостью **{worth/1000000.0:.2f}m** ISK."
+                victim_txt += f" стоимостью **{worth/1000000.0:.2f}m** ISK"
             else:
-                victim_txt += f" стоимостью **{worth/1000000000.0:,.2f}b** ISK."
+                victim_txt += f" стоимостью **{worth/1000000000.0:,.2f}b** ISK"
         victim_txt += "."
 
         datetime_txt: str = str(self.__killmail_data['time'])
