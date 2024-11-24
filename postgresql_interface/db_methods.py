@@ -215,32 +215,101 @@ class QZKBotMethods:
         )
 
     def get_all_non_published_killmails(self) -> typing.List[typing.Dict[str, typing.Any]]:
-        rows = self.db.select_all_rows(
-            "SELECT"
-            " km_id,"
-            " zkm_hash,"
-            " zkm_total_value,"
-            " zkm_points,"
-            " zkm_npc,"
-            " zkm_solo,"
-            " zkm_awox "
-            "FROM killmails, zkillmails "
-            "WHERE"
-            " km_id NOT IN (SELECT p_killmail_id FROM published) AND"
-            " km_id=zkm_id "
-            "ORDER BY km_time;"
-        )
+        rows = self.db.select_all_rows("""
+select
+ km_id,--0
+ --zkm_hash,
+ km_time,--1
+ zkm_total_value,--2
+ zkm_points,--3
+ zkm_npc,--4
+ zkm_solo,--5
+ zkm_awox,--6
+ km_solar_system_id,--7
+ ess_name as system,--8
+ esr_name as region,--9
+ v_ship_type_id as victim_ship_id,--10
+ vs.sdet_type_name as victim_ship,--11
+ v_character_id as victim_id,--12
+ vch.ech_name as victim_name,--13
+ v_corporation_id as victim_corp_id,--14
+ vco.eco_name as victim_corp_name,--15
+ v_alliance_id as victim_alnc_id,--16
+ val.eal_name as victim_alnc_name,--17
+ final_blow.a_character_id as final_blow_id,--18
+ afch.ech_name as final_blow_name,--19
+ afs.sdet_type_name as final_blow_ship--20
+from
+ killmails
+  left outer join esi_systems on (ess_system_id=km_solar_system_id)
+  left outer join esi_constellations on (esc_constellation_id=ess_constellation_id)
+  left outer join esi_regions on (esr_region_id=esc_region_id),
+ victims
+  left outer join eve_sde_type_ids as vs on (vs.sdet_type_id=v_ship_type_id)
+  left outer join esi_characters as vch on (vch.ech_character_id=v_character_id)
+  left outer join esi_corporations as vco on (vco.eco_corporation_id=v_corporation_id)
+  left outer join esi_alliances as val on (val.eal_alliance_id=v_alliance_id),
+ attackers as final_blow
+  left outer join esi_characters as afch on (afch.ech_character_id=final_blow.a_character_id)
+  left outer join eve_sde_type_ids as afs on (afs.sdet_type_id=final_blow.a_ship_type_id),
+ zkillmails
+where
+ km_id not in (select p_killmail_id from published) and
+ km_id=zkm_id and
+ km_id=v_killmail_id and
+ km_id=final_blow.a_killmail_id and
+ final_blow.a_final_blow
+order by km_time;""")
         if rows is None:
             return []
         return [{
             'id': int(_[0]),  # not null
-            'hash': _[1],  # not null
-            'worth': _[2],
-            'points': _[3],
-            'npc': _[4],
-            'solo': _[5],
-            'awox': _[6]
+            'time': _[1],
+            'zkb': {
+                'worth': _[2],
+                'points': _[3],
+                'npc': _[4],
+                'solo': _[5],
+                'awox': _[6]},
+            'solar_system': {
+                'id': _[7],
+                'name': _[8],
+                'region': _[9]},
+            'victim': {
+                'character_id': _[12],
+                'character_name': _[13],
+                'ship_type_id': _[10],
+                'ship_name': _[11],
+                'corporation_id': _[14],
+                'corporation_name': _[15],
+                'alliance_id': _[16],
+                'alliance_name': _[17]},
+            'final_blow': {
+                'id': _[18],
+                'name': _[19],
+                'ship': _[20]}
         } for _ in rows]
+
+    def get_attackers_groups_by_killmail(self, killmail_id: int) -> typing.List[typing.Dict[str, typing.Any]]:
+        rows = self.db.select_all_rows("""
+select
+ a.a_corporation_id as corp_id,
+ co.eco_name as corp_name,
+ count(1) as corp_cnt
+from
+ attackers as a
+  left outer join esi_corporations as co on (co.eco_corporation_id=a.a_corporation_id)
+where
+ a.a_killmail_id=%(id)s
+group by
+ a.a_corporation_id,
+ co.eco_name;""",
+        {'id': killmail_id})
+        if rows is None:
+            return []
+        # id и name м.б. null
+        # pilots not null
+        return [{'corp': {'id': _[0], 'name': _[1], 'pilots': _[2]}} for _ in rows]
 
     def mark_killmail_as_published(self, killmail_id: int) -> None:
         self.db.execute(

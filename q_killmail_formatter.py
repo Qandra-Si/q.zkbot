@@ -6,29 +6,22 @@ import discord
 class FormattedDiscordMessage:
     def __init__(self,
                  killmail_id: int,
-                 killmail_hash: str,
-                 zkb_data: typing.Dict[str, typing.Any],
-                 tracked_corporation_ids: typing.List[int],
-                 cache_dir: str = ".q_zkbot/esi_cache"):
+                 killmail_data: typing.Dict[str, typing.Any],
+                 attackers_data: typing.List[typing.Dict[str, typing.Any]],
+                 tracked_corporation_ids: typing.List[int]):
         self.contents: typing.Optional[str] = None
         self.embed: typing.Optional[discord.Embed] = None
-        # загружаем данные
-        self.__filename: str = f"{cache_dir}/.cache_killmails_{killmail_id}_{killmail_hash}.json"
-        with open(self.__filename, 'r', encoding='utf8') as f:
-            s: str = f.read()
-            self.__killmail = json.loads(s)
-            f.close()
-            if 'json' in self.__killmail:
-                self.format(self.__killmail['json'], zkb_data, tracked_corporation_ids)
-            # os.remove(self.__filename)
+        self.__killmail_id: int = killmail_id
+        self.__killmail_data: typing.Dict[str, typing.Any] = killmail_data
+        self.__attackers_data: typing.List[typing.Dict[str, typing.Any]] = attackers_data
+        self.format(tracked_corporation_ids)
 
     def format(self,
-               km,
-               zkb_data: typing.Dict[str, typing.Any],
                tracked_corporation_ids: typing.List[int]) -> None:
         attackers: typing.List[typing.Dict[str, typing.Any]] = km['attackers']
-        victim: typing.Dict[str, typing.Any] = km['victim']
-        killmail_id: int = int(km['killmail_id'])
+        zkb: typing.Dict[str, typing.Any] = self.__killmail_data['zkb']
+        solar_system: typing.Dict[str, typing.Any] = self.__killmail_data['solar_system']
+        victim: typing.Dict[str, typing.Any] = self.__killmail_data['victim']
 
         loss: bool = victim.get('corporation_id', 0) in tracked_corporation_ids
         attacker_pilots: typing.List[typing.Dict[str, typing.Any]] = [_ for _ in attackers if 'character_id' in _]
@@ -101,27 +94,26 @@ class FormattedDiscordMessage:
         victim_corporation_id: typing.Optional[int] = victim.get('corporation_id')
         victim_alliance_id: typing.Optional[int] = victim.get('alliance_id')
         if victim_character_id:
-            character_name: str = str(victim_character_id)  # TODO:
+            character_name: str = victim.get('character_name', str(victim_character_id))
             victim_txt: str = f"[{character_name}](https://zkillboard.com/character/{victim_character_id}/)"
         else:
             victim_txt: str = ""
         if victim_corporation_id:
-            corporation_name: str = str(victim_corporation_id)  # TODO:
+            corporation_name: str = victim.get('corporation_name', str(victim_corporation_id))
             victim_txt += f" ([{corporation_name}](https://zkillboard.com/corporation/{victim_corporation_id}/))"
 
         victim_ship_type_id: int = victim['ship_type_id']
-        victim_ship_type_name: str = str(victim_ship_type_id)  # TODO:
+        victim_ship_type_name: str = victim.get('ship_name', str(victim_ship_type_id))
         victim_txt += f" потерял свой **{victim_ship_type_name}**"
 
-        solar_system_id: int = km['solar_system_id']
-        solar_system_name: str = str(solar_system_id)  # TODO:
+        solar_system_id: int = solar_system['id']
+        solar_system_name: str = solar_system.get('name', str(solar_system_id))
+        region_name: typing.Optional[str] = solar_system.get('region')
         victim_txt += f" в [{solar_system_name}](https://zkillboard.com/system/{solar_system_id}/)"
-
-        region_name: str = "0000"  # TODO:
         if region_name:
             victim_txt += f" в **{region_name}**"
 
-        worth: typing.Optional[float] = zkb_data.get('worth')
+        worth: typing.Optional[float] = zkb.get('worth')
         if worth:
             if worth < 1000000.0:
                 victim_txt += f" стоимостью **{worth/1000.0:.2f}k** ISK."  # TODO:
@@ -130,21 +122,22 @@ class FormattedDiscordMessage:
             else:
                 victim_txt += f" стоимостью **{worth/1000000000.0:,.2f}b** ISK."  # TODO:
 
-        datetime_txt = f"{km['killmail_time'][:10]} {km['killmail_time'][11:16]}"
+        datetime_txt: str = self.__killmail_data['time']
+        datetime_txt = f"{datetime_txt[:10]} {datetime_txt[11:16]}"
         footer_txt: str = datetime_txt
-        if zkb_data.get('points', 0):
-            footer_txt += f" ● {zkb_data['points']} points"
-        if zkb_data.get('solo', False):
+        if zkb.get('points', 0):
+            footer_txt += f" ● {zkb['points']} points"
+        if zkb.get('solo', False):
             footer_txt += " ● solo"
-        if zkb_data.get('npc', False):
+        if zkb.get('npc', False):
             footer_txt += " ● npc"
-        if zkb_data.get('awox', False):
+        if zkb.get('awox', False):
             footer_txt += " ● awox"
 
         # await channel.send(contents=text, embed=embed)
         self.contents = \
             f"[**{solar_system_name} | {victim_ship_type_name}**]" \
-            f"(https://zkillboard.com/kill/{killmail_id}/)"
+            f"(https://zkillboard.com/kill/{self.__killmail_id}/)"
         self.embed = discord.Embed(
             description=victim_txt + "\n" + attackers_txt,
             colour=0xC85C70 if loss else 0x2e6b4d)
