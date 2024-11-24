@@ -42,6 +42,7 @@ class MyClient(discord.Client):
                     killmail_id: int = zkb_data['id']
                     killmail_hash: str = zkb_data['hash']
                     if is_killmail_ready_on_zkillboard(killmail_id):
+                        print(f'Publishing killmail {killmail_id} (worth: {zkb_data.get('worth')})')
                         fdm: fmt.FormattedDiscordMessage = fmt.FormattedDiscordMessage(
                             killmail_id,
                             killmail_hash,
@@ -55,6 +56,8 @@ class MyClient(discord.Client):
                         del fdm
                         qzm.mark_killmail_as_published(killmail_id)
                         is_any_ready = True
+                    else:
+                        print(f'Can\'t publish killmail {killmail_id}, not ready')
                 if is_any_ready:
                     qzdb.commit()
             del qzm
