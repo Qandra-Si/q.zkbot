@@ -92,9 +92,10 @@ class FormattedDiscordMessage:
                     corporation_id: int = sorted_corporations[0][0]
                     corporation_name: str = str(corporation_id)  # TODO:
                     attackers_txt += \
-                        "основная группа из " \
+                        ", основная группа из " \
                         f"[{corporation_name}](https://zkillboard.com/corporation/{corporation_id}/) " \
                         f"({sorted_corporations[0][1]})"
+            attackers_txt += "."
 
         victim_character_id: typing.Optional[int] = victim.get('character_id')
         victim_corporation_id: typing.Optional[int] = victim.get('corporation_id')
