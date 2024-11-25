@@ -130,7 +130,7 @@ class FormattedDiscordMessage:
         footer_txt: str = datetime_txt
         if zkb.get('points', 0):
             footer_txt += f" ● {zkb['points']} points"
-        if zkb.get('solo', False):
+        if solo or zkb.get('solo', False):
             footer_txt += " ● solo"
         if zkb.get('npc', False):
             footer_txt += " ● npc"
