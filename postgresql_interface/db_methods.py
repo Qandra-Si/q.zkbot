@@ -83,6 +83,7 @@ class QZKBotMethods:
             " zkm_solo=%(s)s,"
             " zkm_awox=%(a)s,"
             " zkm_labels=%(lbs)s,"
+            " zkm_need_refresh=excluded.zkm_need_refresh OR excluded.zkm_points is NULL,"
             " zkm_updated_at=TIMESTAMP WITHOUT TIME ZONE %(at)s "
             "WHERE zkillmails.zkm_location IS NULL;",
             {'id': zkm_data['killmail_id'],
