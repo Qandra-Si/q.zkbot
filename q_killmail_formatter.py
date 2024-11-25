@@ -51,17 +51,17 @@ class FormattedDiscordMessage:
                 # Бой был выигран в соло пилотом Qandra Si на Tristan
                 attackers_txt += f" на **{solo_ship_name}**"
         else:
-            attackers_txt: str = "Окончательный удар нанёс"
+            attackers_txt: str = "Его добил"
             if final_character_id:
-                # Окончательный удар нанёс Qandra Si
+                # Его добил Qandra Si
                 final_character_name: str = final_blow.get('name', str(final_character_id))
                 attackers_txt += f" [{final_character_name}](https://zkillboard.com/character/{final_character_id}/)"
             if final_ship_name:
-                if solo or final_ship_name is not None:
-                    # Окончательный удар нанёс Qandra Si на Tristan
+                if final_character_id is not None:
+                    # Его добил Qandra Si на Tristan
                     attackers_txt += f" на **{final_ship_name}**"
                 else:
-                    # Окончательный удар нанёс Tristan
+                    # Его добил Tristan
                     attackers_txt += f" **{final_ship_name}**"
         attackers_txt += "."
 
