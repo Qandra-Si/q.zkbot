@@ -208,8 +208,14 @@ class QZKBotMethods:
                      }
                 )
 
-    def get_all_non_published_killmails(self) -> typing.List[typing.Dict[str, typing.Any]]:
-        rows = self.db.select_all_rows("""
+    def get_non_published_killmails(self) -> typing.List[typing.Dict[str, typing.Any]]:
+        return self.__internal_killmails_ready_to_publish("not zkm_published")
+
+    def get_need_to_refresh_killmails(self) -> typing.List[typing.Dict[str, typing.Any]]:
+        return self.__internal_killmails_ready_to_publish("zkm_published and zkm_need_refresh")
+
+    def __internal_killmails_ready_to_publish(self, where: str) -> typing.List[typing.Dict[str, typing.Any]]:
+        rows = self.db.select_all_rows(f"""
 select
  km_id,--0
  --zkm_hash,
@@ -248,7 +254,7 @@ from
   left outer join eve_sde_type_ids as afs on (afs.sdet_type_id=final_blow.a_ship_type_id),
  zkillmails
 where
- not zkm_published and
+ ({where}) and
  km_id=zkm_id and
  km_id=v_killmail_id and
  km_id=final_blow.a_killmail_id and
