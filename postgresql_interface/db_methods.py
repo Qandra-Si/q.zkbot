@@ -206,14 +206,6 @@ class QZKBotMethods:
                      }
                 )
 
-    def mark_all_killmails_as_published_if_none(self) -> None:
-        self.db.execute("""
-update zkillmails
-set
- zkm_published=true,
- zkm_need_refresh=false
-where 0 = (select count(1) from zkillmails where zkm_published);""")
-
     def get_all_non_published_killmails(self) -> typing.List[typing.Dict[str, typing.Any]]:
         rows = self.db.select_all_rows("""
 select
@@ -341,6 +333,14 @@ where
                 'ship_type_id': rows[0][5],
                 'ship_name': rows[0][6]}
 
+    def mark_all_killmails_as_published_if_none(self) -> None:
+        self.db.execute("""
+update zkillmails
+set
+ zkm_published=true,
+ zkm_need_refresh=false
+where 0 = (select count(1) from zkillmails where zkm_published);""")
+
     def mark_killmail_as_published(self, killmail_id: int) -> None:
         self.db.execute("""
 update zkillmails
@@ -348,8 +348,14 @@ set
  zkm_published=true,
  zkm_need_refresh=false
 where zkm_id=%(id)s;""",
-            {'id': killmail_id}
-        )
+            {'id': killmail_id})
+
+    def mark_killmail_as_need_refresh(self, killmail_id: int) -> None:
+        self.db.execute("""
+update zkillmails
+set zkm_need_refresh=true
+where zkm_id=%(id)s and zkm_published;""",
+            {'id': killmail_id})
 
     # -------------------------------------------------------------------------
     # [common]

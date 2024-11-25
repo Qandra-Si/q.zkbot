@@ -249,6 +249,7 @@ def main():
                                     qzm.insert_or_update_region(region_id, region_data, at)
 
             qzm.insert_into_killmails(killmail_id, killmail_data)
+            qzm.mark_killmail_as_need_refresh(killmail_id)
             qzdb.commit()
 
             print(f"New killmail {killmail_id} with {len(killmail_data['attackers'])} attackers and {killmail_data['victim'].get('character_id')} victim\n")
