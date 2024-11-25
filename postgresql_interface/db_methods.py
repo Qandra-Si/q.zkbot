@@ -72,7 +72,8 @@ class QZKBotMethods:
             " %(lbs)s,"
             " CURRENT_TIMESTAMP AT TIME ZONE 'GMT',"
             " TIMESTAMP WITHOUT TIME ZONE %(at)s)"
-            "ON CONFLICT ON CONSTRAINT pk_zkm DO UPDATE SET"
+            "ON CONFLICT ON CONSTRAINT pk_zkm DO "
+            "UPDATE SET"
             " zkm_location=%(l)s,"
             " zkm_fitted_value=%(fv)s,"
             " zkm_dropped_value=%(drv)s,"
@@ -83,9 +84,9 @@ class QZKBotMethods:
             " zkm_solo=%(s)s,"
             " zkm_awox=%(a)s,"
             " zkm_labels=%(lbs)s,"
-            " zkm_need_refresh=excluded.zkm_need_refresh OR excluded.zkm_points is NULL,"
+            " zkm_need_refresh=TRUE,"
             " zkm_updated_at=TIMESTAMP WITHOUT TIME ZONE %(at)s "
-            "WHERE zkillmails.zkm_location IS NULL;",
+            "WHERE zkillmails.zkm_points IS NULL;",
             {'id': zkm_data['killmail_id'],
              'h': zkb['hash'],
              'l': zkb['locationID'],
