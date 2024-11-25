@@ -40,7 +40,6 @@ class MyClient(discord.Client):
         qzdb: db.QZKBotDatabase = db.QZKBotDatabase(debug=False)
         qzdb.connect(q_settings.g_database)
         qzm: db.QZKBotMethods = db.QZKBotMethods(qzdb)
-        is_any_ready: bool = False
 
         # изменение ранее опубликованных killmails (например при обновлении информации о стоимости корабля)
         need_refresh: typing.List[typing.Dict[str, typing.Any]] = qzm.get_need_to_refresh_killmails()
@@ -77,8 +76,7 @@ class MyClient(discord.Client):
             # т.к. возможна ситуация, когда сообщение будет удалено вручную, и тогда алгоритм будет бесконечно
             # формировать список на редактирование
             qzm.mark_killmail_as_published(killmail_id)
-            # устанавливаем признак, что надо будет делать commit
-            is_any_ready = True
+            qzdb.commit()
 
         # публикация ещё неопубликованных killmails (могут быть без информации о стоимости корабля)
         non_published: typing.List[typing.Dict[str, typing.Any]] = qzm.get_non_published_killmails()
@@ -111,12 +109,9 @@ class MyClient(discord.Client):
             del fdm
             # отмечаем killmail опубликованным
             qzm.mark_killmail_as_published(killmail_id)
-            # устанавливаем признак, что надо будет делать commit
-            is_any_ready = True
+            qzdb.commit()
 
         # заканчиваем сеанс работы с БД
-        if is_any_ready:
-            qzdb.commit()
         del qzm
         qzdb.disconnect()
         del qzdb
