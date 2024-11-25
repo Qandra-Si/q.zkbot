@@ -207,12 +207,12 @@ class QZKBotMethods:
                 )
 
     def mark_all_killmails_as_published_if_none(self) -> None:
-        self.db.execute(
-            "insert into published"
-            " select km_id"
-            " from killmails"
-            " where 0 = (select count(1) from published);"
-        )
+        self.db.execute("""
+update zkillmails
+set
+ zkm_published=true,
+ zkm_need_refresh=false
+where 0 = (select count(1) from zkillmails where zkm_published);""")
 
     def get_all_non_published_killmails(self) -> typing.List[typing.Dict[str, typing.Any]]:
         rows = self.db.select_all_rows("""
@@ -254,7 +254,7 @@ from
   left outer join eve_sde_type_ids as afs on (afs.sdet_type_id=final_blow.a_ship_type_id),
  zkillmails
 where
- km_id not in (select p_killmail_id from published) and
+ not zkm_published and
  km_id=zkm_id and
  km_id=v_killmail_id and
  km_id=final_blow.a_killmail_id and
@@ -342,9 +342,12 @@ where
                 'ship_name': rows[0][6]}
 
     def mark_killmail_as_published(self, killmail_id: int) -> None:
-        self.db.execute(
-            "INSERT INTO published(p_killmail_id)"
-            "VALUES(%(id)s);",
+        self.db.execute("""
+update zkillmails
+set
+ zkm_published=true,
+ zkm_need_refresh=false
+where zkm_id=%(id)s;""",
             {'id': killmail_id}
         )
 

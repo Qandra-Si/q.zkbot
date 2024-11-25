@@ -8,10 +8,14 @@ g_esi_client_scope = ["esi-killmails.read_corporation_killmails.v1",  # Requires
                      ]
 # TLS1.3 with SNI denied in Russia by RKN since 06.11.2024
 # для того, чтобы проверить, нужно ли выставить следующий параметр в True, следует выполнить команду:
-# curl -X GET "https://esi.evetech.net/latest/status/?datasource=tranquility" -H  "accept: application/json" -H  "Cache-Control: no-cache"
+# curl -X GET "https://esi.evetech.net/latest/status/?datasource=tranquility" \
+#      -H "accept: application/json" \
+#      -H "Cache-Control: no-cache"
 # если придёт ошибка: {"error":"unroutable"}, то выставить в True
 # также можно проврерить различие и удостовериться:
-# curl --tlsv1.2 --tls-max 1.2 -X GET "https://esi.evetech.net/latest/status/?datasource=tranquility" -H  "accept: application/json" -H  "Cache-Control: no-cache"
+# curl --tlsv1.2 --tls-max 1.2 -X GET "https://esi.evetech.net/latest/status/?datasource=tranquility" \
+#      -H "accept: application/json" \
+#      -H "Cache-Control: no-cache"
 g_client_restrict_tls13: bool = False
 
 g_database = {

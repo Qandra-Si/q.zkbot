@@ -28,9 +28,6 @@ DROP TABLE IF EXISTS qz.esi_corporations;
 DROP INDEX IF EXISTS idx_ech_pk;
 DROP TABLE IF EXISTS qz.esi_characters;
 
-DROP INDEX IF EXISTS idx_pk_p;
-DROP TABLE IF EXISTS qz.published;
-
 DROP INDEX IF EXISTS idx_a_ship_type_id;
 DROP INDEX IF EXISTS idx_a_corporation_id;
 DROP INDEX IF EXISTS idx_a_character_id;
@@ -71,6 +68,8 @@ CREATE TABLE qz.zkillmails
     zkm_solo BOOLEAN,
     zkm_awox BOOLEAN,
     zkm_labels TEXT[],
+    zkm_published BOOLEAN NOT NULL DEFAULT FALSE, -- признак того, что сообщение опубликовано в discord-е
+    zkm_need_refresh BOOLEAN NOT NULL DEFAULT FALSE, -- признак того, что сообщение надо обновить в discord-е
     zkm_created_at TIMESTAMP,
     zkm_updated_at TIMESTAMP,
     CONSTRAINT pk_zkm PRIMARY KEY (zkm_id)
@@ -93,6 +92,16 @@ CREATE INDEX idx_zkm_location
     ON qz.zkillmails USING btree
     (zkm_location ASC NULLS LAST)
     WHERE (zkm_location IS NOT NULL);
+
+CREATE INDEX idx_zkm_published
+    ON qz.zkillmails USING btree
+    (zkm_published ASC NULLS LAST)
+TABLESPACE pg_default;
+
+CREATE INDEX idx_zkm_need_refresh
+    ON qz.zkillmails USING btree
+    (zkm_need_refresh ASC NULLS LAST)
+TABLESPACE pg_default;
 --------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
@@ -217,25 +226,6 @@ CREATE INDEX idx_a_ship_type_id
     ON qz.attackers USING btree
     (a_ship_type_id ASC NULLS LAST)
     WHERE (a_ship_type_id IS NOT NULL);
---------------------------------------------------------------------------------
-
---------------------------------------------------------------------------------
--- published
--- справочник со списком уже опубликованных в discord-е событий
---------------------------------------------------------------------------------
-CREATE TABLE qz.published
-(
-    p_killmail_id INTEGER NOT NULL,
-    CONSTRAINT pk_p PRIMARY KEY (p_killmail_id)
-)
-TABLESPACE pg_default;
-
-ALTER TABLE qz.published OWNER TO qz_user;
-
-CREATE UNIQUE INDEX idx_pk_p
-    ON qz.published USING btree
-    (p_killmail_id ASC NULLS LAST)
-TABLESPACE pg_default;
 --------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
