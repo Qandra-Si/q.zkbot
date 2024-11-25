@@ -72,11 +72,13 @@ class MyClient(discord.Client):
                 if fdm.contents and fdm.embed:
                     await msg.edit(content=fdm.contents, embed=fdm.embed)
                 del fdm
-                # отмечаем killmail опубликованным
-                qzm.mark_killmail_as_published(killmail_id)
-                # устанавливаем признак, что надо будет делать commit
-                is_any_ready = True
                 break
+            # Внимание! независимо от того, найдено ли сообщение в discord-е или нет - помечаем  его опубликованным
+            # т.к. возможна ситуация, когда сообщение будет удалено вручную, и тогда алгоритм будет бесконечно
+            # формировать список на редактирование
+            qzm.mark_killmail_as_published(killmail_id)
+            # устанавливаем признак, что надо будет делать commit
+            is_any_ready = True
 
         # публикация ещё неопубликованных killmails (могут быть без информации о стоимости корабля)
         non_published: typing.List[typing.Dict[str, typing.Any]] = qzm.get_non_published_killmails()
