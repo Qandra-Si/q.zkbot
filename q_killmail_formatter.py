@@ -129,9 +129,10 @@ class FormattedDiscordMessage:
         datetime_txt = f"{datetime_txt[:10]} {datetime_txt[11:16]}"
         footer_txt: str = datetime_txt
         if zkb.get('points', 0):
-            footer_txt += f" ● {zkb['points']} points"
+            points: str = self.get_points_description(zkb['points'])
+            footer_txt += f" ● {points}"
         if solo or zkb.get('solo', False):
-            footer_txt += " ● solo"
+            footer_txt += " ● соло"
         if zkb.get('npc', False):
             footer_txt += " ● npc"
         if zkb.get('awox', False):
@@ -159,3 +160,17 @@ class FormattedDiscordMessage:
             self.embed.set_footer(text=footer_txt, icon_url=footer_icon)
         else:
             self.embed.set_footer(text=footer_txt)
+
+    def get_points_description(self, points: int) -> str:
+        #return f"{points} points"
+        modulo: int = points % 100
+        if 5 <= modulo <= 20:
+            return f"{points} попугаев"
+        else:
+            modulo = points % 10
+            if (0 == modulo) or (5 <= modulo <= 9):
+                return f"{points} попугаев"
+            elif 2 <= modulo <= 4:
+                return f"{points} попугая"
+            elif modulo == 1:
+                return f"{points} попугай"
