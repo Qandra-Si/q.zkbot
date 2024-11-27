@@ -46,7 +46,7 @@ class MyClient(discord.Client):
         for killmail_data in need_refresh:
             killmail_id: int = killmail_data['id']
             # поиск ранее опубликованного сообщения по killmail-коду в содержимом сообщения
-            for msg in [_ async for _ in channel.history(limit=20, oldest_first=False)]:
+            for msg in [_ async for _ in channel.history(limit=40, oldest_first=False)]:
                 if self.__bot_id != msg.author.id:
                     continue
                 if msg.content.find(f"https://zkillboard.com/kill/{killmail_id}/") == -1:

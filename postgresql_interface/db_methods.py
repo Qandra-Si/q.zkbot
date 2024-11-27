@@ -212,9 +212,10 @@ class QZKBotMethods:
         return self.__internal_killmails_ready_to_publish("not zkm_published")
 
     def get_need_to_refresh_killmails(self) -> typing.List[typing.Dict[str, typing.Any]]:
-        return self.__internal_killmails_ready_to_publish("zkm_published and zkm_need_refresh")
+        return self.__internal_killmails_ready_to_publish("zkm_published and zkm_need_refresh", "limit 3")
 
-    def __internal_killmails_ready_to_publish(self, where: str) -> typing.List[typing.Dict[str, typing.Any]]:
+    def __internal_killmails_ready_to_publish(self, where: str, limit: str = "") \
+            -> typing.List[typing.Dict[str, typing.Any]]:
         rows = self.db.select_all_rows(f"""
 select
  km_id,--0
@@ -259,7 +260,8 @@ where
  km_id=v_killmail_id and
  km_id=final_blow.a_killmail_id and
  final_blow.a_final_blow
-order by km_time;""")
+order by km_time
+{limit};""")
         if rows is None:
             return []
         return [{
