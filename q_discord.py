@@ -17,7 +17,7 @@ def is_killmail_ready_on_zkillboard(killmail_id: int) -> typing.Tuple[bool, int,
     # ---
     # https://discord.com/channels/849992399639281694/850216522266050570/1311753815749431449
     # Squizz попросил прекраить запрашивать статус готовности страницы
-    return true
+    return True, 200, "publising without checking zkillboard"
 
 
 class MyClient(discord.Client):
