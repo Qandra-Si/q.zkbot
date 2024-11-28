@@ -10,10 +10,14 @@ import q_killmail_formatter as fmt
 
 
 def is_killmail_ready_on_zkillboard(killmail_id: int) -> typing.Tuple[bool, int, str]:
-    conn = http.client.HTTPSConnection("zkillboard.com")
-    conn.request("GET", f"/kill/{killmail_id}/")
-    res = conn.getresponse()
-    return res.status != 404, res.status, res.reason  # если всё что угодно, но не "404 Not Found", то публикуем
+    #conn = http.client.HTTPSConnection("zkillboard.com")
+    #conn.request("GET", f"/kill/{killmail_id}/")
+    #res = conn.getresponse()
+    #return res.status != 404, res.status, res.reason  # если всё что угодно, но не "404 Not Found", то публикуем
+    # ---
+    # https://discord.com/channels/849992399639281694/850216522266050570/1311753815749431449
+    # Squizz попросил прекраить запрашивать статус готовности страницы
+    return true
 
 
 class MyClient(discord.Client):
