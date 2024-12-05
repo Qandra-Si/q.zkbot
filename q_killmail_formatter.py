@@ -139,9 +139,48 @@ class FormattedDiscordMessage:
                 else:
                     # если есть атакующие альянсы, то работать придётся с двумя списками, в каждом из которых может
                     # быть различная ситуация по накопленным данным, поэтому ищем паттерны
-                    ordered_groups: typing.List[typing.Tuple[str, typing.Dict[str, typing.Optional[int]]]] = \
-                        [('c', _) for _ in attacker_corps if _['alli'] is None] + \
-                        [('a', _) for _ in attacker_alli]
+                    if q_settings.g_use_corporation_emblem_instead_alliance and \
+                       next((1 for _ in attacker_corps if _['id'] in q_settings.q_tracked_corporations), None):
+                        # если группа атакующих из отслеживаемой корпорации, то в соответствии с указанными настройками
+                        # удалить альянс и оставить только корпорацию
+                        corps: typing.List[typing.Dict[str, typing.Any]] = [
+                            _ for _ in attacker_corps
+                            if _['alli'] is None or _['id'] in q_settings.q_tracked_corporations]
+                        alli: typing.List[typing.Dict[str, typing.Any]] = attacker_alli[:]
+                        # перебор отслеживаемых корпораций и удаление либо корпы, либо альянса, в зависимости от
+                        # количества пилотов в группах
+                        for corporation_id in q_settings.q_tracked_corporations:
+                            # поиск корпорации
+                            tracked_corp: typing.Optional[typing.Dict[str, typing.Any]] = \
+                                next((_ for _ in corps if _['id'] == corporation_id), None)
+                            # если отслеживаемая корпорация не найдена, или она не в альянсе, то выход
+                            if not tracked_corp or tracked_corp['alli'] is None:
+                                continue
+                            # поиск альянса
+                            alliance_id: int = tracked_corp['alli']
+                            tracked_alli: typing.Optional[typing.Dict[str, typing.Any]] = \
+                                next((_ for _ in alli if _['id'] == alliance_id), None)
+                            # следующее условие вырожденное, альянс есть всегда, но проверим на всякий случай
+                            if not tracked_alli:
+                                continue
+                            # удаляем либо корпорацию, либо альянс
+                            if tracked_corp['pilots'] < tracked_alli['pilots']:
+                                # удаляем корпорацию
+                                corps: typing.List[typing.Dict[str, typing.Any]] = \
+                                    [_ for _ in corps if _['id'] not in corporation_id]
+                            else:
+                                # удаляем альянс
+                                alli: typing.List[typing.Dict[str, typing.Any]] = \
+                                    [_ for _ in alli if _['id'] not in alliance_id]
+                        # объединение списков в которых есть либо отслеживаемые корпорации, либо альянсы
+                        ordered_groups: typing.List[typing.Tuple[str, typing.Dict[str, typing.Optional[int]]]] = \
+                            [('c', _) for _ in corps] + \
+                            [('a', _) for _ in alli]
+                    else:
+                        # среди атакующих корпораций нет тех, которые отслеживаются
+                        ordered_groups: typing.List[typing.Tuple[str, typing.Dict[str, typing.Optional[int]]]] = \
+                            [('c', _) for _ in attacker_corps if _['alli'] is None] + \
+                            [('a', _) for _ in attacker_alli]
                     # print(ordered_groups)
                     # суммарно в объединённом списке может быть меньше 2х элементов (2 корпы из одного альянса удалятся)
                     if len(ordered_groups) == 1:
