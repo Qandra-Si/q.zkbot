@@ -33,7 +33,7 @@ class FormattedDiscordMessage:
             group_name = str(group_id)
         group_type: str = 'corporation' if group_type == 'c' else 'alliance'
         res: str = f"[{group_name}](https://zkillboard.com/{group_type}/{group_id}/)"
-        if pilots:
+        if pilots and pilots > 1:
             res += f" ({pilots})"
         return res
 
