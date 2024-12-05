@@ -195,7 +195,7 @@ class FormattedDiscordMessage:
         else:
             victim_txt: str = ""
         if victim_corporation_id:
-            victim_txt += self.__pilots_group('c', victim_corporation_id, victim.get('corporation_name'))
+            victim_txt += f" ({self.__pilots_group('c', victim_corporation_id, victim.get('corporation_name'))})"
 
         # Blood Khanid (Warriors tribe) потерял Rupture
         victim_ship_type_id: int = victim['ship_type_id']
