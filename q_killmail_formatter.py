@@ -133,7 +133,7 @@ class FormattedDiscordMessage:
                                 attackers_rest = ".."
                         for i in range(min(3, num)):
                             g: typing.Dict[str, typing.Any] = attacker_corps[i]
-                            attackers_txt += ", " if i else ""
+                            attackers_txt += "" if i == 0 else (" и " if i == 1 else ", и ")
                             attackers_txt += self.__pilots_group('c', g['id'], g.get('name'), pilots0)
                         attackers_txt += attackers_rest
                 else:
@@ -222,7 +222,7 @@ class FormattedDiscordMessage:
                             for i in range(num):
                                 t: str = ordered_groups[i][0]
                                 g: typing.Dict[str, typing.Any] = ordered_groups[i][1]
-                                attackers_txt += ", " if i else ""
+                                attackers_txt += "" if i == 0 else (" и " if i == 1 else ", и ")
                                 attackers_txt += self.__pilots_group(t, g['id'], g.get('name'), g['pilots'])
                             attackers_txt += attackers_rest
             attackers_txt += "."
