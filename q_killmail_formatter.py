@@ -110,23 +110,31 @@ class FormattedDiscordMessage:
                         g: typing.Dict[str, typing.Any] = attacker_corps[0]
                         attackers_txt += ", основная группа из "
                         attackers_txt += self.__pilots_group('c', g['id'], g.get('name'), pilots0)
-                    elif pilots0 > 1 and pilots0 == pilots1:
+                    elif pilots0 == pilots1:
                         num: int = 2
                         while num < attacker_corps_len:
                             if pilots0 != attacker_corps[num]['pilots']:
                                 break
                             num += 1
-                        if num <= 3:
-                            if num == attacker_corps_len:
-                                # Атакующие: (6) группы из Warriors tribe (2), R Initiative (2), Phoenix Tag. (2)
-                                attackers_txt += ", группы из "
-                            else:
-                                # Атакующие: (7), основные группы из G.T.U. (2), Compi's (2), lolshto (2)
-                                attackers_txt += ", основные группы из "
-                            for i in range(num):
-                                g: typing.Dict[str, typing.Any] = attacker_corps[i]
-                                attackers_txt += ", " if i else ""
-                                attackers_txt += self.__pilots_group('c', g['id'], g.get('name'), pilots0)
+                        attackers_rest: str = ""
+                        if pilots0 == 1:
+                            # Атакующие: (2), пилоты из Warriors tribe, Phoenix Tag.
+                            attackers_txt += ", пилоты из "
+                            if attacker_corps_len > num:
+                                attackers_rest = ".."
+                        elif num == attacker_corps_len:
+                            # Атакующие: (6) группы из Warriors tribe (2), R Initiative (2), Phoenix Tag. (2)
+                            attackers_txt += ", группы из "
+                        else:
+                            # Атакующие: (7), основные группы из G.T.U. (2), Compi's (2), lolshto (2)
+                            attackers_txt += ", основные группы из "
+                            if attacker_corps_len > num:
+                                attackers_rest = ".."
+                        for i in range(min(3, num)):
+                            g: typing.Dict[str, typing.Any] = attacker_corps[i]
+                            attackers_txt += ", " if i else ""
+                            attackers_txt += self.__pilots_group('c', g['id'], g.get('name'), pilots0)
+                        attackers_txt += attackers_rest
                 else:
                     # если есть атакующие альянсы, то работать придётся с двумя списками, в каждом из которых может
                     # быть различная ситуация по накопленным данным, поэтому ищем паттерны
@@ -149,25 +157,33 @@ class FormattedDiscordMessage:
                             g: typing.Dict[str, typing.Any] = ordered_groups[0][1]
                             attackers_txt += ", основная группа из "
                             attackers_txt += self.__pilots_group(t, g['id'], g.get('name'), pilots0)
-                        elif pilots0 > 1 and pilots0 == pilots1:
+                        elif pilots0 == pilots1:
                             num: int = 2
                             sz: int = len(ordered_groups)
                             while num < sz:
                                 if pilots0 != ordered_groups[num][1]['pilots']:
                                     break
                                 num += 1
-                            if num <= 3:
-                                if num == attacker_corps_len:
-                                    # Атакующие: (6) группы из Warriors tribe (2), R Initiative (2), Phoenix Tag. (2)
-                                    attackers_txt += ", группы из "
-                                else:
-                                    # Атакующие: (7), основные группы из G.T.U. (2), Compi's (2), lolshto (2)
-                                    attackers_txt += ", основные группы из "
-                                for i in range(num):
-                                    t: str = ordered_groups[0][0]
-                                    g: typing.Dict[str, typing.Any] = attacker_corps[i]
-                                    attackers_txt += ", " if i else ""
-                                    attackers_txt += self.__pilots_group(t, g['id'], g.get('name'), g['pilots'])
+                            attackers_rest: str = ""
+                            if pilots0 == 1:
+                                # Атакующие: (2), пилоты из Warriors tribe, Phoenix Tag.
+                                attackers_txt += ", пилоты из "
+                                if sz > num:
+                                    attackers_rest = ".."
+                            elif num == attacker_corps_len:
+                                # Атакующие: (6) группы из Warriors tribe (2), R Initiative (2), Phoenix Tag. (2)
+                                attackers_txt += ", группы из "
+                            else:
+                                # Атакующие: (7), основные группы из G.T.U. (2), Compi's (2), lolshto (2)
+                                attackers_txt += ", основные группы из "
+                                if sz > num:
+                                    attackers_rest = ".."
+                            for i in range(num):
+                                t: str = ordered_groups[0][0]
+                                g: typing.Dict[str, typing.Any] = attacker_corps[i]
+                                attackers_txt += ", " if i else ""
+                                attackers_txt += self.__pilots_group(t, g['id'], g.get('name'), g['pilots'])
+                            attackers_txt += attackers_rest
             attackers_txt += "."
 
         # Blood Khanid (Warriors tribe)
