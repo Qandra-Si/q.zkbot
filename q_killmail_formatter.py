@@ -119,15 +119,15 @@ class FormattedDiscordMessage:
                             num += 1
                         attackers_rest: str = ""
                         if pilots0 == 1:
-                            # Атакующие: (2), пилоты из Warriors tribe, Phoenix Tag.
+                            # Атакующие: (2), пилоты из Warriors tribe и Phoenix Tag.
                             attackers_txt += ", пилоты из "
                             if attacker_corps_len > num:
                                 attackers_rest = ".."
                         elif num == attacker_corps_len:
-                            # Атакующие: (6) группы из Warriors tribe (2), R Initiative (2), Phoenix Tag. (2)
+                            # Атакующие: (6) группы из Warriors tribe (2) и R Initiative (2), и Phoenix Tag. (2)
                             attackers_txt += ", группы из "
                         else:
-                            # Атакующие: (7), основные группы из G.T.U. (2), Compi's (2), lolshto (2)
+                            # Атакующие: (7), основные группы из G.T.U. (2) и Compi's (2), и lolshto (2)
                             attackers_txt += ", основные группы из "
                             if attacker_corps_len > num:
                                 attackers_rest = ".."
@@ -207,15 +207,15 @@ class FormattedDiscordMessage:
                                 num += 1
                             attackers_rest: str = ""
                             if pilots0 == 1:
-                                # Атакующие: (2), пилоты из Warriors tribe, Phoenix Tag.
+                                # Атакующие: (2), пилоты из Warriors tribe и Phoenix Tag.
                                 attackers_txt += ", пилоты из "
                                 if sz > num:
                                     attackers_rest = ".."
                             elif num == sz:
-                                # Атакующие: (6) группы из Warriors tribe (2), R Initiative (2), Phoenix Tag. (2)
+                                # Атакующие: (6) группы из Warriors tribe (2) и R Initiative (2), и Phoenix Tag. (2)
                                 attackers_txt += ", группы из "
                             else:
-                                # Атакующие: (7), основные группы из G.T.U. (2), Compi's (2), lolshto (2)
+                                # Атакующие: (7), основные группы из G.T.U. (2) и Compi's (2), и lolshto (2)
                                 attackers_txt += ", основные группы из "
                                 if sz > num:
                                     attackers_rest = ".."
