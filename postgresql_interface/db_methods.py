@@ -292,27 +292,51 @@ order by km_time
                 'ship': _[20]}
         } for _ in rows]
 
-    def get_attackers_groups_by_killmail(self, killmail_id: int) -> typing.List[typing.Dict[str, typing.Any]]:
-        rows = self.db.select_all_rows("""
+    def get_attackers_groups_by_killmail(self, killmail_id: int) -> typing.Dict[str, typing.Any]:
+        corps = self.db.select_all_rows("""
 select
- a.a_corporation_id as corp_id,
- co.eco_name as corp_name,
- count(1) as corp_cnt
+ a.a_alliance_id,
+ a.a_corporation_id,
+ co.eco_name,
+ count(1)
 from
  attackers as a
   left outer join esi_corporations as co on (co.eco_corporation_id=a.a_corporation_id)
 where
  a.a_character_id is not null and
+ --co.a_corporation_id is not null and
  a.a_killmail_id=%(id)s
 group by
+ a.a_alliance_id,
  a.a_corporation_id,
- co.eco_name;""",
-        {'id': killmail_id})
-        if rows is None:
-            return []
-        # id и name м.б. null
-        # pilots not null
-        return [{'corp': {'id': _[0], 'name': _[1], 'pilots': _[2]}} for _ in rows]
+ co.eco_name;""", {'id': killmail_id})
+        alli = self.db.select_all_rows("""
+select
+ a.a_alliance_id,
+ al.eal_name,
+ count(1)
+from
+ attackers as a
+  left outer join esi_alliances as al on (al.eal_alliance_id=a.a_alliance_id)
+where
+ a.a_character_id is not null and
+ a.a_alliance_id is not null and
+ a.a_killmail_id=%(id)s
+group by
+ a.a_alliance_id,
+ al.eal_name;""", {'id': killmail_id})
+        res = {'corporations': [], 'alliances': [], 'solo': None}
+        if corps is not None:
+            # alli, id и name м.б. null
+            # pilots not null
+            res['corporations'] = c = [{'alli': _[0], 'id': _[1], 'name': _[2], 'pilots': _[3]} for _ in corps]
+            if len(c) == 1 and c[0]['pilots'] == 1:
+                res['solo'] = self.get_solo_attacker_by_killmail(killmail_id)
+        if alli is not None:
+            # name м.б. null
+            # id и pilots not null
+            res['alliances'] = [{'id': _[0], 'name': _[1], 'pilots': _[2]} for _ in alli]
+        return res
 
     def get_solo_attacker_by_killmail(self, killmail_id: int) -> typing.Optional[typing.Dict[str, typing.Any]]:
         rows = self.db.select_all_rows("""

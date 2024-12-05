@@ -9,26 +9,26 @@ class FormattedDiscordMessage:
     def __init__(self,
                  killmail_id: int,
                  killmail_data: typing.Dict[str, typing.Any],
-                 attackers_data: typing.List[typing.Dict[str, typing.Any]],
-                 solo_attacker: typing.Optional[typing.Dict[str, typing.Any]],
+                 killmail_attackers: typing.Dict[str, typing.Any],
                  tracked_corporation_ids: typing.List[int]):
         self.contents: typing.Optional[str] = None
         self.embed: typing.Optional[discord.Embed] = None
         self.__killmail_id: int = killmail_id
         self.__killmail_data: typing.Dict[str, typing.Any] = killmail_data
-        self.__attackers_data: typing.List[typing.Dict[str, typing.Any]] = attackers_data
-        self.__solo_attacker: typing.Optional[typing.Dict[str, typing.Any]] = solo_attacker
+        self.__killmail_attackers: typing.Dict[str, typing.Any] = killmail_attackers
         self.format(tracked_corporation_ids)
 
     def format(self, tracked_corporation_ids: typing.List[int]) -> None:
-        attacker_corps: typing.List[typing.Dict[str, typing.Any]] = self.__attackers_data
+        attacker_corps: typing.List[typing.Dict[str, typing.Any]] = self.__killmail_attackers['corporations']
+        attacker_alli: typing.List[typing.Dict[str, typing.Any]] = self.__killmail_attackers['alliances']
+        attacker_solo: typing.Optional[typing.Dict[str, typing.Any]] = self.__killmail_attackers['solo']
         zkb: typing.Dict[str, typing.Any] = self.__killmail_data['zkb']
         solar_system: typing.Dict[str, typing.Any] = self.__killmail_data['solar_system']
         victim: typing.Dict[str, typing.Any] = self.__killmail_data['victim']
         final_blow: typing.Dict[str, typing.Any] = self.__killmail_data['final_blow']
 
         loss: bool = victim.get('corporation_id', 0) in tracked_corporation_ids
-        attacker_pilots_qty: int = sum([_['corp']['pilots'] for _ in attacker_corps])
+        attacker_pilots_qty: int = 0 if not attacker_corps else sum([_['pilots'] for _ in attacker_corps])
         solo: bool = attacker_pilots_qty == 1
         final_character_id: typing.Optional[int] = final_blow.get('id')
         final_ship_name: typing.Optional[int] = final_blow.get('ship')
@@ -39,14 +39,14 @@ class FormattedDiscordMessage:
         #  * solo_attacker-пилот не является неписью
 
         # см. про расположение элементов в embed-е тут: https://guide.disnake.dev/popular-topics/embeds
-        if solo and self.__solo_attacker:
-            solo_attacker_id: int = self.__solo_attacker.get('character_id')
-            solo_attacker_name: str = self.__solo_attacker.get('character_name', str(solo_attacker_id))
+        if solo and attacker_solo:
+            solo_attacker_id: int = attacker_solo.get('character_id')
+            solo_attacker_name: str = attacker_solo.get('character_name', str(solo_attacker_id))
             # Бой был выигран в соло пилотом Qandra Si
             attackers_txt: str = \
                 f"Бой был выигран в соло пилотом" \
                 f" [{solo_attacker_name}](https://zkillboard.com/character/{solo_attacker_id}/)"
-            solo_ship_name: int = self.__solo_attacker.get('ship_name')
+            solo_ship_name: int = attacker_solo.get('ship_name')
             if solo_ship_name:
                 # Бой был выигран в соло пилотом Qandra Si на Tristan
                 attackers_txt += f" на **{solo_ship_name}**"
@@ -69,23 +69,105 @@ class FormattedDiscordMessage:
             attackers_txt += f"\nАтакующие: {attacker_pilots_qty}"
             attacker_corps_len: int = len(attacker_corps)
             if attacker_corps_len == 1:
-                # Атакующие: (2) из Warriors tribe
-                corp: typing.Dict[str, typing.Any] = attacker_corps[0]['corp']
+                corp: typing.Dict[str, typing.Optional[int]] = attacker_corps[0]
                 corporation_id: int = corp['id']
-                corporation_name: str = corp.get('name', str(corporation_id))
-                attackers_txt += f" из [{corporation_name}](https://zkillboard.com/corporation/{corporation_id}/)"
-            elif attacker_corps_len >= 2:
-                sorted_corps: typing.List[typing.Dict[str, typing.Any]] = [_['corp'] for _ in attacker_corps]
-                sorted_corps.sort(key=lambda _: _['pilots'], reverse=True)
-                if sorted_corps[0]['pilots'] > sorted_corps[1]['pilots']:
-                    # Атакующие: (5), основная группа из Warriors tribe
-                    corp: typing.Dict[str, typing.Any] = sorted_corps[0]
-                    corporation_id: int = corp['id']
+                if attacker_alli and corporation_id not in q_settings.q_tracked_corporations:
+                    # Атакующие: (2) из Ragequit Cancel Sub
+                    alli: typing.Dict[str, typing.Optional[int]] = attacker_alli[0]
+                    alliance_id: int = alli['id']
+                    alliance_name: str = alli.get('name', str(alliance_id))
+                    attackers_txt += f" из [{alliance_name}](https://zkillboard.com/alliance/{alliance_id}/)"
+                else:
+                    # Атакующие: (2) из Warriors tribe
                     corporation_name: str = corp.get('name', str(corporation_id))
-                    attackers_txt += \
-                        ", основная группа из " \
-                        f"[{corporation_name}](https://zkillboard.com/corporation/{corporation_id}/) " \
-                        f"({corp['pilots']})"
+                    attackers_txt += f" из [{corporation_name}](https://zkillboard.com/corporation/{corporation_id}/)"
+            elif attacker_corps_len >= 2:
+                attacker_corps.sort(key=lambda _: _['pilots'], reverse=True)
+                if not attacker_alli:
+                    # если нет атакующих альянсов, то работаем лишь только со списком
+                    # корпораций, в котором 2 или более элемента
+                    pilots0: int = attacker_corps[0]['pilots']
+                    pilots1: int = attacker_corps[1]['pilots']
+                    if pilots0 > pilots1:
+                        # Атакующие: (5), основная группа из Warriors tribe
+                        corp: typing.Dict[str, typing.Any] = attacker_corps[0]
+                        corporation_id: int = corp['id']
+                        corporation_name: str = corp.get('name', str(corporation_id))
+                        attackers_txt += \
+                            ", основная группа из " \
+                            f"[{corporation_name}](https://zkillboard.com/corporation/{corporation_id}/) " \
+                            f"({pilots0})"
+                    elif pilots0 > 1 and pilots0 == pilots1:
+                        num: int = 2
+                        while num < attacker_corps_len:
+                            if pilots0 != attacker_corps[num]['pilots']:
+                                break
+                            num += 1
+                        if num <= 3:
+                            if num == attacker_corps_len:
+                                # Атакующие: (6) группы из Warriors tribe (2), R Initiative (2), Phoenix Tag. (2)
+                                attackers_txt += " группы из "
+                            else:
+                                # Атакующие: (6), основные группы из Warriors tribe (2), R Initiative (2), Phoenix Tag. (2)
+                                attackers_txt += ", основные группы из "
+                            for i in range(num):
+                                corp: typing.Dict[str, typing.Any] = attacker_corps[i]
+                                corporation_id: int = corp['id']
+                                corporation_name: str = corp.get('name', str(corporation_id))
+                                attackers_txt += \
+                                    (", " if i else "") + \
+                                    f"[{corporation_name}](https://zkillboard.com/corporation/{corporation_id}/) " \
+                                    f"({pilots0})"
+                else:
+                    # если есть атакующие альянсы, то работать придётся с двумя списками, в каждом из которых может
+                    # быть различная ситуация по накопленным данным, поэтому ищем паттерны
+                    ordered_groups: typing.List[typing.Tuple[str, typing.Dict[str, typing.Optional[int]]]] = \
+                        [('c', _) for _ in attacker_corps if _['alli'] is None] + \
+                        [('a', _) for _ in attacker_alli]
+                    # суммарно в объединённом списке может быть меньше 2х элементов (2 корпы из одного альянса удалятся)
+                    if len(ordered_groups) == 1:
+                        # Атакующие: (2) из C A M E L O T
+                        grp: typing.Dict[str, typing.Optional[int]] = ordered_groups[0][1]
+                        group_id: int = grp['id']
+                        group_name: str = grp.get('name', str(group_id))
+                        attackers_txt += f" из [{group_name}](https://zkillboard.com/alliance/{group_id}/)"
+                    else:
+                        ordered_groups.sort(key=lambda _: _[1]['pilots'], reverse=True)
+                        pilots0: int = ordered_groups[0][1]['pilots']
+                        pilots1: int = ordered_groups[1][1]['pilots']
+                        if pilots0 > pilots1:
+                            # Атакующие: (5), основная группа из Warriors tribe
+                            grp: typing.Dict[str, typing.Any] = ordered_groups[0][1]
+                            group_id: int = grp['id']
+                            group_name: str = grp.get('name', str(group_id))
+                            group_type: str = 'corporation' if ordered_groups[0] == 'c' else 'alliance'
+                            attackers_txt += \
+                                ", основная группа из " \
+                                f"[{group_name}](https://zkillboard.com/{group_type}/{group_id}/) " \
+                                f"({pilots0})"
+                        elif pilots0 > 1 and pilots0 == pilots1:
+                            num: int = 2
+                            sz: int = len(ordered_groups)
+                            while num < sz:
+                                if pilots0 != ordered_groups[num][1]['pilots']:
+                                    break
+                                num += 1
+                            if num <= 3:
+                                if num == attacker_corps_len:
+                                    # Атакующие: (6) группы из Warriors tribe (2), R Initiative (2), Phoenix Tag. (2)
+                                    attackers_txt += " группы из "
+                                else:
+                                    # Атакующие: (7), основные группы из G.T.U. (2), Compi's (2), lolshto (2)
+                                    attackers_txt += ", основные группы из "
+                                for i in range(num):
+                                    grp: typing.Dict[str, typing.Any] = attacker_corps[i]
+                                    group_id: int = grp['id']
+                                    group_name: str = grp.get('name', str(group_id))
+                                    group_type: str = 'corporation' if ordered_groups[0] == 'c' else 'alliance'
+                                    attackers_txt += \
+                                        (", " if i else "") + \
+                                        f"[{group_name}](https://zkillboard.com/{group_type}/{group_id}/) " \
+                                        f"({pilots0})"
             attackers_txt += "."
 
         # Blood Khanid (Warriors tribe)
