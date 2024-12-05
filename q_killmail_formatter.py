@@ -100,6 +100,7 @@ class FormattedDiscordMessage:
                     attackers_txt += self.__pilots_group('c', corporation_id, corp.get('name'))
             elif attacker_corps_len >= 2:
                 attacker_corps.sort(key=lambda _: _['pilots'], reverse=True)
+                # print(attacker_corps, "-------", attacker_alli)
                 if not attacker_alli:
                     # если нет атакующих альянсов, то работаем лишь только со списком
                     # корпораций, в котором 2 или более элемента
@@ -141,6 +142,7 @@ class FormattedDiscordMessage:
                     ordered_groups: typing.List[typing.Tuple[str, typing.Dict[str, typing.Optional[int]]]] = \
                         [('c', _) for _ in attacker_corps if _['alli'] is None] + \
                         [('a', _) for _ in attacker_alli]
+                    # print(ordered_groups)
                     # суммарно в объединённом списке может быть меньше 2х элементов (2 корпы из одного альянса удалятся)
                     if len(ordered_groups) == 1:
                         # Атакующие: (2) из C A M E L O T
@@ -170,7 +172,7 @@ class FormattedDiscordMessage:
                                 attackers_txt += ", пилоты из "
                                 if sz > num:
                                     attackers_rest = ".."
-                            elif num == attacker_corps_len:
+                            elif num == sz:
                                 # Атакующие: (6) группы из Warriors tribe (2), R Initiative (2), Phoenix Tag. (2)
                                 attackers_txt += ", группы из "
                             else:
@@ -179,8 +181,8 @@ class FormattedDiscordMessage:
                                 if sz > num:
                                     attackers_rest = ".."
                             for i in range(num):
-                                t: str = ordered_groups[0][0]
-                                g: typing.Dict[str, typing.Any] = attacker_corps[i]
+                                t: str = ordered_groups[i][0]
+                                g: typing.Dict[str, typing.Any] = ordered_groups[i][1]
                                 attackers_txt += ", " if i else ""
                                 attackers_txt += self.__pilots_group(t, g['id'], g.get('name'), g['pilots'])
                             attackers_txt += attackers_rest
