@@ -167,11 +167,11 @@ class FormattedDiscordMessage:
                             if tracked_corp['pilots'] < tracked_alli['pilots']:
                                 # удаляем корпорацию
                                 corps: typing.List[typing.Dict[str, typing.Any]] = \
-                                    [_ for _ in corps if _['id'] not in corporation_id]
+                                    [_ for _ in corps if _['id'] != corporation_id]
                             else:
                                 # удаляем альянс
                                 alli: typing.List[typing.Dict[str, typing.Any]] = \
-                                    [_ for _ in alli if _['id'] not in alliance_id]
+                                    [_ for _ in alli if _['id'] != alliance_id]
                         # объединение списков в которых есть либо отслеживаемые корпорации, либо альянсы
                         ordered_groups: typing.List[typing.Tuple[str, typing.Dict[str, typing.Optional[int]]]] = \
                             [('c', _) for _ in corps] + \
