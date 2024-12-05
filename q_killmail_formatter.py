@@ -18,6 +18,25 @@ class FormattedDiscordMessage:
         self.__killmail_attackers: typing.Dict[str, typing.Any] = killmail_attackers
         self.format(tracked_corporation_ids)
 
+    @staticmethod
+    def __pilot_url(pilot_id: int, pilot_name: typing.Optional[str]) -> str:
+        if not pilot_name:
+            pilot_name = str(pilot_id)
+        return f" [{pilot_name}](https://zkillboard.com/character/{pilot_id}/)"
+
+    @staticmethod
+    def __pilots_group(group_type: str,
+                       group_id: int,
+                       group_name: typing.Optional[str],
+                       pilots: typing.Optional[int] = None) -> str:
+        if not group_name:
+            group_name = str(group_id)
+        group_type: str = 'corporation' if group_type == 'c' else 'alliance'
+        res: str = f"[{group_name}](https://zkillboard.com/{group_type}/{group_id}/)"
+        if pilots:
+            res += f" ({pilots})"
+        return res
+
     def format(self, tracked_corporation_ids: typing.List[int]) -> None:
         attacker_corps: typing.List[typing.Dict[str, typing.Any]] = self.__killmail_attackers['corporations']
         attacker_alli: typing.List[typing.Dict[str, typing.Any]] = self.__killmail_attackers['alliances']
@@ -41,11 +60,10 @@ class FormattedDiscordMessage:
         # см. про расположение элементов в embed-е тут: https://guide.disnake.dev/popular-topics/embeds
         if solo and attacker_solo:
             solo_attacker_id: int = attacker_solo.get('character_id')
-            solo_attacker_name: str = attacker_solo.get('character_name', str(solo_attacker_id))
             # Бой был выигран в соло пилотом Qandra Si
             attackers_txt: str = \
-                f"Бой был выигран в соло пилотом" \
-                f" [{solo_attacker_name}](https://zkillboard.com/character/{solo_attacker_id}/)"
+                f"Бой был выигран в соло пилотом " + \
+                self.__pilot_url(solo_attacker_id, attacker_solo.get('character_name'))
             solo_ship_name: int = attacker_solo.get('ship_name')
             if solo_ship_name:
                 # Бой был выигран в соло пилотом Qandra Si на Tristan
@@ -54,8 +72,8 @@ class FormattedDiscordMessage:
             attackers_txt: str = "Его добил"
             if final_character_id:
                 # Его добил Qandra Si
-                final_character_name: str = final_blow.get('name', str(final_character_id))
-                attackers_txt += f" [{final_character_name}](https://zkillboard.com/character/{final_character_id}/)"
+                attackers_txt += " "
+                attackers_txt += self.__pilot_url(final_character_id, final_blow.get('name'))
             if final_ship_name:
                 if final_character_id is not None:
                     # Его добил Qandra Si на Tristan
@@ -74,13 +92,12 @@ class FormattedDiscordMessage:
                 if attacker_alli and corporation_id not in q_settings.q_tracked_corporations:
                     # Атакующие: (2) из Ragequit Cancel Sub
                     alli: typing.Dict[str, typing.Optional[int]] = attacker_alli[0]
-                    alliance_id: int = alli['id']
-                    alliance_name: str = alli.get('name', str(alliance_id))
-                    attackers_txt += f" из [{alliance_name}](https://zkillboard.com/alliance/{alliance_id}/)"
+                    attackers_txt += " из "
+                    attackers_txt += self.__pilots_group('a', alli['id'], alli.get('name'))
                 else:
                     # Атакующие: (2) из Warriors tribe
-                    corporation_name: str = corp.get('name', str(corporation_id))
-                    attackers_txt += f" из [{corporation_name}](https://zkillboard.com/corporation/{corporation_id}/)"
+                    attackers_txt += " из "
+                    attackers_txt += self.__pilots_group('c', corporation_id, corp.get('name'))
             elif attacker_corps_len >= 2:
                 attacker_corps.sort(key=lambda _: _['pilots'], reverse=True)
                 if not attacker_alli:
@@ -90,13 +107,9 @@ class FormattedDiscordMessage:
                     pilots1: int = attacker_corps[1]['pilots']
                     if pilots0 > pilots1:
                         # Атакующие: (5), основная группа из Warriors tribe
-                        corp: typing.Dict[str, typing.Any] = attacker_corps[0]
-                        corporation_id: int = corp['id']
-                        corporation_name: str = corp.get('name', str(corporation_id))
-                        attackers_txt += \
-                            ", основная группа из " \
-                            f"[{corporation_name}](https://zkillboard.com/corporation/{corporation_id}/) " \
-                            f"({pilots0})"
+                        g: typing.Dict[str, typing.Any] = attacker_corps[0]
+                        attackers_txt += ", основная группа из "
+                        attackers_txt += self.__pilots_group('c', g['id'], g.get('name'), pilots0)
                     elif pilots0 > 1 and pilots0 == pilots1:
                         num: int = 2
                         while num < attacker_corps_len:
@@ -106,18 +119,14 @@ class FormattedDiscordMessage:
                         if num <= 3:
                             if num == attacker_corps_len:
                                 # Атакующие: (6) группы из Warriors tribe (2), R Initiative (2), Phoenix Tag. (2)
-                                attackers_txt += " группы из "
+                                attackers_txt += ", группы из "
                             else:
-                                # Атакующие: (6), основные группы из Warriors tribe (2), R Initiative (2), Phoenix Tag. (2)
+                                # Атакующие: (7), основные группы из G.T.U. (2), Compi's (2), lolshto (2)
                                 attackers_txt += ", основные группы из "
                             for i in range(num):
-                                corp: typing.Dict[str, typing.Any] = attacker_corps[i]
-                                corporation_id: int = corp['id']
-                                corporation_name: str = corp.get('name', str(corporation_id))
-                                attackers_txt += \
-                                    (", " if i else "") + \
-                                    f"[{corporation_name}](https://zkillboard.com/corporation/{corporation_id}/) " \
-                                    f"({pilots0})"
+                                g: typing.Dict[str, typing.Any] = attacker_corps[i]
+                                attackers_txt += ", " if i else ""
+                                attackers_txt += self.__pilots_group('c', g['id'], g.get('name'), pilots0)
                 else:
                     # если есть атакующие альянсы, то работать придётся с двумя списками, в каждом из которых может
                     # быть различная ситуация по накопленным данным, поэтому ищем паттерны
@@ -127,24 +136,19 @@ class FormattedDiscordMessage:
                     # суммарно в объединённом списке может быть меньше 2х элементов (2 корпы из одного альянса удалятся)
                     if len(ordered_groups) == 1:
                         # Атакующие: (2) из C A M E L O T
-                        grp: typing.Dict[str, typing.Optional[int]] = ordered_groups[0][1]
-                        group_id: int = grp['id']
-                        group_name: str = grp.get('name', str(group_id))
-                        attackers_txt += f" из [{group_name}](https://zkillboard.com/alliance/{group_id}/)"
+                        g: typing.Dict[str, typing.Optional[int]] = ordered_groups[0][1]
+                        attackers_txt += " из "
+                        attackers_txt += self.__pilots_group('a', g['id'], g.get('name'))
                     else:
                         ordered_groups.sort(key=lambda _: _[1]['pilots'], reverse=True)
                         pilots0: int = ordered_groups[0][1]['pilots']
                         pilots1: int = ordered_groups[1][1]['pilots']
                         if pilots0 > pilots1:
                             # Атакующие: (5), основная группа из Warriors tribe
-                            grp: typing.Dict[str, typing.Any] = ordered_groups[0][1]
-                            group_id: int = grp['id']
-                            group_name: str = grp.get('name', str(group_id))
-                            group_type: str = 'corporation' if ordered_groups[0] == 'c' else 'alliance'
-                            attackers_txt += \
-                                ", основная группа из " \
-                                f"[{group_name}](https://zkillboard.com/{group_type}/{group_id}/) " \
-                                f"({pilots0})"
+                            t: str = ordered_groups[0][0]
+                            g: typing.Dict[str, typing.Any] = ordered_groups[0][1]
+                            attackers_txt += ", основная группа из "
+                            attackers_txt += self.__pilots_group(t, g['id'], g.get('name'), pilots0)
                         elif pilots0 > 1 and pilots0 == pilots1:
                             num: int = 2
                             sz: int = len(ordered_groups)
@@ -155,19 +159,15 @@ class FormattedDiscordMessage:
                             if num <= 3:
                                 if num == attacker_corps_len:
                                     # Атакующие: (6) группы из Warriors tribe (2), R Initiative (2), Phoenix Tag. (2)
-                                    attackers_txt += " группы из "
+                                    attackers_txt += ", группы из "
                                 else:
                                     # Атакующие: (7), основные группы из G.T.U. (2), Compi's (2), lolshto (2)
                                     attackers_txt += ", основные группы из "
                                 for i in range(num):
-                                    grp: typing.Dict[str, typing.Any] = attacker_corps[i]
-                                    group_id: int = grp['id']
-                                    group_name: str = grp.get('name', str(group_id))
-                                    group_type: str = 'corporation' if ordered_groups[0] == 'c' else 'alliance'
-                                    attackers_txt += \
-                                        (", " if i else "") + \
-                                        f"[{group_name}](https://zkillboard.com/{group_type}/{group_id}/) " \
-                                        f"({pilots0})"
+                                    t: str = ordered_groups[0][0]
+                                    g: typing.Dict[str, typing.Any] = attacker_corps[i]
+                                    attackers_txt += ", " if i else ""
+                                    attackers_txt += self.__pilots_group(t, g['id'], g.get('name'), g['pilots'])
             attackers_txt += "."
 
         # Blood Khanid (Warriors tribe)
@@ -175,13 +175,11 @@ class FormattedDiscordMessage:
         victim_corporation_id: typing.Optional[int] = victim.get('corporation_id')
         victim_alliance_id: typing.Optional[int] = victim.get('alliance_id')
         if victim_character_id:
-            character_name: str = victim.get('character_name', str(victim_character_id))
-            victim_txt: str = f"[{character_name}](https://zkillboard.com/character/{victim_character_id}/)"
+            victim_txt: str = self.__pilot_url(victim_character_id, victim.get('character_name'))
         else:
             victim_txt: str = ""
         if victim_corporation_id:
-            corporation_name: str = victim.get('corporation_name', str(victim_corporation_id))
-            victim_txt += f" ([{corporation_name}](https://zkillboard.com/corporation/{victim_corporation_id}/))"
+            victim_txt += self.__pilots_group('c', victim_corporation_id, victim.get('corporation_name'))
 
         # Blood Khanid (Warriors tribe) потерял Rupture
         victim_ship_type_id: int = victim['ship_type_id']
