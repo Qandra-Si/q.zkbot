@@ -2,21 +2,20 @@
 import json
 import discord
 
-import q_settings
-
 
 class FormattedDiscordMessage:
     def __init__(self,
                  killmail_id: int,
                  killmail_data: typing.Dict[str, typing.Any],
                  killmail_attackers: typing.Dict[str, typing.Any],
-                 tracked_corporation_ids: typing.List[int]):
+                 tracked_corporation_ids: typing.List[int],
+                 use_corporation_instead_alliance: bool):
         self.contents: typing.Optional[str] = None
         self.embed: typing.Optional[discord.Embed] = None
         self.__killmail_id: int = killmail_id
         self.__killmail_data: typing.Dict[str, typing.Any] = killmail_data
         self.__killmail_attackers: typing.Dict[str, typing.Any] = killmail_attackers
-        self.format(tracked_corporation_ids)
+        self.format(tracked_corporation_ids, use_corporation_instead_alliance)
 
     @staticmethod
     def __pilot_url(pilot_id: int, pilot_name: typing.Optional[str]) -> str:
@@ -37,7 +36,9 @@ class FormattedDiscordMessage:
             res += f" ({pilots})"
         return res
 
-    def format(self, tracked_corporation_ids: typing.List[int]) -> None:
+    def format(self,
+               tracked_corporation_ids: typing.List[int],
+               use_corporation_instead_alliance: bool) -> None:
         attacker_corps: typing.List[typing.Dict[str, typing.Any]] = self.__killmail_attackers['corporations']
         attacker_alli: typing.List[typing.Dict[str, typing.Any]] = self.__killmail_attackers['alliances']
         attacker_solo: typing.Optional[typing.Dict[str, typing.Any]] = self.__killmail_attackers['solo']
@@ -89,7 +90,7 @@ class FormattedDiscordMessage:
             if attacker_corps_len == 1:
                 corp: typing.Dict[str, typing.Optional[int]] = attacker_corps[0]
                 corporation_id: int = corp['id']
-                if attacker_alli and corporation_id not in q_settings.q_tracked_corporations:
+                if attacker_alli and corporation_id not in tracked_corporation_ids:
                     # Атакующие: (2) из Ragequit Cancel Sub
                     alli: typing.Dict[str, typing.Optional[int]] = attacker_alli[0]
                     attackers_txt += " из "
@@ -139,17 +140,17 @@ class FormattedDiscordMessage:
                 else:
                     # если есть атакующие альянсы, то работать придётся с двумя списками, в каждом из которых может
                     # быть различная ситуация по накопленным данным, поэтому ищем паттерны
-                    if q_settings.g_use_corporation_emblem_instead_alliance and \
-                       next((1 for _ in attacker_corps if _['id'] in q_settings.q_tracked_corporations), None):
+                    if use_corporation_instead_alliance and \
+                       next((1 for _ in attacker_corps if _['id'] in tracked_corporation_ids), None):
                         # если группа атакующих из отслеживаемой корпорации, то в соответствии с указанными настройками
                         # удалить альянс и оставить только корпорацию
                         corps: typing.List[typing.Dict[str, typing.Any]] = [
                             _ for _ in attacker_corps
-                            if _['alli'] is None or _['id'] in q_settings.q_tracked_corporations]
+                            if _['alli'] is None or _['id'] in tracked_corporation_ids]
                         alli: typing.List[typing.Dict[str, typing.Any]] = attacker_alli[:]
                         # перебор отслеживаемых корпораций и удаление либо корпы, либо альянса, в зависимости от
                         # количества пилотов в группах
-                        for corporation_id in q_settings.q_tracked_corporations:
+                        for corporation_id in tracked_corporation_ids:
                             # поиск корпорации
                             tracked_corp: typing.Optional[typing.Dict[str, typing.Any]] = \
                                 next((_ for _ in corps if _['id'] == corporation_id), None)
@@ -277,7 +278,7 @@ class FormattedDiscordMessage:
 
         # выбор иконки, которая появится в footer-е
         footer_icon: typing.Optional[str] = None
-        if loss and q_settings.g_use_corporation_emblem_instead_alliance and victim_corporation_id:
+        if loss and use_corporation_instead_alliance and victim_corporation_id:
             footer_icon = f"https://images.evetech.net/corporations/{victim_corporation_id}/logo?size=32"
         elif victim_alliance_id:
             footer_icon = f"https://images.evetech.net/alliances/{victim_alliance_id}/logo?size=32"
