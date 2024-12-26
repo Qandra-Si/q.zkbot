@@ -271,7 +271,7 @@ class FormattedDiscordMessage:
         if solo or zkb.get('solo', False):
             footer_txt += " ● соло"
         if zkb.get('npc', False):
-            footer_txt += " ● npc"
+            footer_txt += " ● непись"
         if zkb.get('awox', False):
             footer_txt += " ● awox"
 
