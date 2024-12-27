@@ -109,25 +109,25 @@ class MyClient(discord.Client):
             qzm.mark_killmail_as_published(killmail_id)
             qzdb.commit()
 
-        # получение информации о текущем времени
-        at_to: datetime.datetime = datetime.datetime.now(datetime.UTC)
-        at_from: datetime.datetime = at_to - datetime.timedelta(days=7)
-        # публикация статистических сведений
-        stat = qzm.statistics_for_the_period(
-            q_settings.q_tracked_corporations,
-            at_from,
-            at_to)
-        # получаем форматированное сообщение
-        fdm: fms.FormattedDiscordStatisticsMessage = fms.FormattedDiscordStatisticsMessage(
-            at_from,
-            at_to,
-            stat)
-        if fdm.paginator:
-            e = fdm.embed
-            for page in fdm.paginator.pages:
-                await channel.send(page, embed=e)
-                e = None
-        del fdm
+            # получение информации о текущем времени
+            at_to: datetime.datetime = datetime.datetime.now(datetime.UTC)
+            at_from: datetime.datetime = at_to - datetime.timedelta(days=7)
+            # публикация статистических сведений
+            stat = qzm.statistics_for_the_period(
+                q_settings.q_tracked_corporations,
+                at_from,
+                at_to)
+            # получаем форматированное сообщение
+            fdm: fms.FormattedDiscordStatisticsMessage = fms.FormattedDiscordStatisticsMessage(
+                at_from,
+                at_to,
+                stat)
+            if fdm.paginator:
+                e = fdm.embed
+                for page in fdm.paginator.pages:
+                    await channel.send(page, embed=e)
+                    e = None
+            del fdm
 
         # заканчиваем сеанс работы с БД
         del qzm
