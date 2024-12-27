@@ -3,7 +3,7 @@ import json
 import discord
 
 
-class FormattedDiscordMessage:
+class FormattedDiscordKillmailMessage:
     def __init__(self,
                  killmail_id: int,
                  killmail_data: typing.Dict[str, typing.Any],

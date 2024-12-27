@@ -7,7 +7,8 @@ from discord.ext import tasks
 
 import postgresql_interface as db
 import q_settings
-import q_killmail_formatter as fmt
+import q_killmail_formatter as fmk
+import q_statistics_formatter as fms
 
 
 def is_killmail_ready_on_zkillboard(killmail_id: int) -> typing.Tuple[bool, int, str]:
@@ -63,7 +64,7 @@ class MyClient(discord.Client):
                 # загружаем дополнительные данные из БД
                 killmail_attackers: typing.Dict[str, typing.Any] = qzm.get_attackers_groups_by_killmail(killmail_id)
                 # получаем форматированное сообщение
-                fdm: fmt.FormattedDiscordMessage = fmt.FormattedDiscordMessage(
+                fdm: fmk.FormattedDiscordKillmailMessage = fmk.FormattedDiscordKillmailMessage(
                     killmail_id,
                     killmail_data,
                     killmail_attackers,
@@ -93,7 +94,7 @@ class MyClient(discord.Client):
             # загружаем дополнительные данные из БД
             killmail_attackers: typing.Dict[str, typing.Any] = qzm.get_attackers_groups_by_killmail(killmail_id)
             # получаем форматированное сообщение
-            fdm: fmt.FormattedDiscordMessage = fmt.FormattedDiscordMessage(
+            fdm: fmk.FormattedDiscordKillmailMessage = fmk.FormattedDiscordKillmailMessage(
                 killmail_id,
                 killmail_data,
                 killmail_attackers,
@@ -109,15 +110,22 @@ class MyClient(discord.Client):
             qzdb.commit()
 
         # получение информации о текущем времени
-        at: datetime.datetime = datetime.datetime.now(datetime.UTC)
+        at_to: datetime.datetime = datetime.datetime.now(datetime.UTC)
+        at_from: datetime.datetime = at_to - datetime.timedelta(days=7)
         # публикация статистических сведений
         stat = qzm.statistics_for_the_period(
             q_settings.q_tracked_corporations,
-            at - datetime.timedelta(days=7),
-            at)
+            at_from,
+            at_to)
         # получаем форматированное сообщение
-        # ...
-        print(stat)
+        fdm: fms.FormattedDiscordStatisticsMessage = fms.FormattedDiscordStatisticsMessage(
+            at_from,
+            at_to,
+            stat)
+        if fdm.contents and fdm.embed:
+            await channel.send(content=fdm.contents, embed=fdm.embed)
+        elif fdm.contents:
+            await channel.send(fdm.contents)
 
         # заканчиваем сеанс работы с БД
         del qzm
