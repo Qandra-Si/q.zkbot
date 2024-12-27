@@ -438,17 +438,17 @@ from (
         res: typing.Dict[str, typing.Dict[str, int]] = {}
         if stat0 is not None:
             for s in stat0:
-                if s[0] == 'f':  # win
-                    if s[1] == 't':  # solo
+                if not s[0]:  # win
+                    if s[1]:  # solo
                         title = 'solo_win'
                     else:  # gang
                         title = 'gang_win'
                 else:  # loss
-                    if s[1] == 't':  # solo
+                    if s[1]:  # solo
                         title = 'solo_loss'
                     else:  # gang
                         title = 'gang_loss'
-                res.update({title: {'cnt': s[2], 'fitted': s[3], 'dropped': s[4], 'destroyed': s[5]}})
+                res[title] = {'cnt': int(s[2]), 'fitted': int(s[3]), 'dropped': int(s[4]), 'destroyed': int(s[5])}
         return res
 
     # -------------------------------------------------------------------------
