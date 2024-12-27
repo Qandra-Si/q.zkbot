@@ -1,6 +1,7 @@
 import typing
 import json
 import http.client
+import datetime
 import discord
 from discord.ext import tasks
 
@@ -106,6 +107,17 @@ class MyClient(discord.Client):
             # отмечаем killmail опубликованным
             qzm.mark_killmail_as_published(killmail_id)
             qzdb.commit()
+
+        # получение информации о текущем времени
+        at: datetime.datetime = datetime.datetime.now(datetime.UTC)
+        # публикация статистических сведений
+        stat = qzm.statistics_for_the_period(
+            q_settings.q_tracked_corporations,
+            at - datetime.timedelta(days=7),
+            at)
+        # получаем форматированное сообщение
+        # ...
+        print(stat)
 
         # заканчиваем сеанс работы с БД
         del qzm

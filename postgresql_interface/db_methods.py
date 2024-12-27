@@ -391,6 +391,66 @@ set zkm_need_refresh=true
 where zkm_id=%(id)s and zkm_published;""",
             {'id': killmail_id})
 
+    def statistics_for_the_period(
+            self,
+            tracked_corporation_ids: typing.List[int],
+            period_from: datetime.datetime,
+            period_to: datetime.datetime) -> typing.Dict[str, typing.Dict[str, int]]:
+        #  loss | solo | cnt |      fitted |    dropped |   destroyed
+        # ------+------+-----+-------------+------------+-------------
+        #  f    | f    |  37 | 32542496114 | 7093119508 | 28509244868
+        #  f    | t    |   1 |    11411268 |    5125540 |     6296514
+        #  t    | f    |   4 |   702828556 |   63163918 |   824436259
+        stat0 = self.db.select_all_rows("""
+select
+ x.loss,
+ x.solo,
+ --x.npc,
+ x.cnt,
+ round(x.fitted::numeric,0) as fitted,
+ round(x.dropped::numeric,0) as dropped,
+ round(x.destroyed::numeric,0) as destroyed
+from (
+ select
+  -- km_time,
+  count(1) as cnt,
+  sum(zkm_fitted_value) as fitted,
+  sum(zkm_dropped_value) as dropped,
+  sum(zkm_destroyed_value) as destroyed,
+  --zkm_npc as npc,
+  zkm_solo as solo,
+  v_corporation_id in (select * from unnest(%(trc)s)) as loss
+ from
+  qz.zkillmails,
+  qz.killmails,
+  qz.victims
+ where
+  zkm_id=km_id and
+  zkm_id=v_killmail_id and
+  km_time>TIMESTAMP WITHOUT TIME ZONE %(dt1)s and
+  km_time<=TIMESTAMP WITHOUT TIME ZONE %(dt2)s
+ group by 6, zkm_solo --,zkm_npc
+) x;""", {
+            'trc': list(tracked_corporation_ids),
+            'dt1': period_from,
+            'dt2': period_to,
+        })
+        res: typing.Dict[str, typing.Dict[str, int]] = {}
+        if stat0 is not None:
+            for s in stat0:
+                if s[0] == 'f':  # win
+                    if s[1] == 't':  # solo
+                        title = 'solo_win'
+                    else:  # gang
+                        title = 'gang_win'
+                else:  # loss
+                    if s[1] == 't':  # solo
+                        title = 'solo_loss'
+                    else:  # gang
+                        title = 'gang_loss'
+                res.update({title: {'cnt': s[2], 'fitted': s[3], 'dropped': s[4], 'destroyed': s[5]}})
+        return res
+
     # -------------------------------------------------------------------------
     # [common]
     # -------------------------------------------------------------------------
