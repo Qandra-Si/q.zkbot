@@ -122,10 +122,11 @@ class MyClient(discord.Client):
             at_from,
             at_to,
             stat)
-        if fdm.contents and fdm.embed:
-            await channel.send(content=fdm.contents, embed=fdm.embed)
-        elif fdm.contents:
-            await channel.send(fdm.contents)
+        if fdm.paginator:
+            e = fdm.embed
+            for page in fdm.paginator.pages:
+                await channel.send(page, embed=e)
+                e = None
         del fdm
 
         # заканчиваем сеанс работы с БД
