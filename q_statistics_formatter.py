@@ -21,6 +21,5 @@ class FormattedDiscordStatisticsMessage:
 
         self.paginator = discord.ext.commands.Paginator(prefix='', suffix='')
         self.paginator.add_line("**Статистика подъехала**")
-        paginator = discord.ext.commands.Paginator(prefix='', suffix='')
-        for key, data in self.__stat:
-            paginator.add_line(key)
+        for key, data in self.__stat.items():
+            self.paginator.add_line(str(key))
