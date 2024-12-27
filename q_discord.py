@@ -126,6 +126,7 @@ class MyClient(discord.Client):
             await channel.send(content=fdm.contents, embed=fdm.embed)
         elif fdm.contents:
             await channel.send(fdm.contents)
+        del fdm
 
         # заканчиваем сеанс работы с БД
         del qzm
