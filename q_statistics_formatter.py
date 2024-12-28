@@ -88,8 +88,12 @@ class FormattedDiscordStatisticsMessage:
                 f"{additional}.")
 
         if not solo_loss and not gang_loss and not solo_win and not gang_win:
-            self.paginator.add_line("— И сия пучина поглотила ея в один момент.")
-            self.paginator.add_line("— В общем все умерли.")
+            if npc_loss:
+                self.paginator.add_line("Вылетов не было, скрабились.")
+                self.paginator.add_line("— Все этим занимаются, но никто не признаётся.")
+            else:
+                self.paginator.add_line("— И сия пучина поглотила ея в один момент.")
+                self.paginator.add_line("— В общем все умерли.")
         else:
             if not solo_loss and not gang_loss:
                 self.paginator.add_line("Ни разу не слились.")
