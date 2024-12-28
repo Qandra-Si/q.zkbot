@@ -461,9 +461,12 @@ select
  x.loss,
  x.killmail_id,
  x.solar_system_id,
- --x.pilot_id,
+ x.pilot_id,
  x.ship_type_id,
  x.damage_taken,
+ x.alliance_id,
+ x.corporation_id,
+ (select ech_name from qz.esi_characters where ech_character_id=x.pilot_id) as pilot_name,
  (select ess_name from qz.esi_systems where ess_system_id=x.solar_system_id) as solar_system,
  (select sdet_type_name from qz.eve_sde_type_ids where sdet_type_id=x.ship_type_id) as ship_type_name
 from (
@@ -473,9 +476,11 @@ from (
   x.loss,
   x.killmail_id,
   x.solar_system_id,
-  --x.pilot_id
+  x.pilot_id,
   x.ship_type_id,
-  x.damage_taken
+  x.damage_taken,
+  x.alliance_id,
+  x.corporation_id
  from (
   select
    coalesce(zkm_total_value,0) as total,
@@ -483,9 +488,11 @@ from (
    true as loss,
    v_killmail_id as killmail_id,
    km_solar_system_id as solar_system_id,
-   --v_character_id as pilot_id,
+   v_character_id as pilot_id,
    v_damage_taken as damage_taken,
-   v_ship_type_id as ship_type_id
+   v_ship_type_id as ship_type_id,
+   v_alliance_id as alliance_id,
+   v_corporation_id as corporation_id
   from qz.victims, qz.zkillmails, qz.killmails
   where
    zkm_id=km_id and
@@ -506,9 +513,11 @@ from (
    false as loss,
    v_killmail_id as killmail_id,
    km_solar_system_id as solar_system_id,
-   -- v_character_id as pilot_id,
+   v_character_id as pilot_id,
    v_ship_type_id as ship_type_id,
-   v_damage_taken as damage_taken
+   v_damage_taken as damage_taken,
+   v_alliance_id as alliance_id,
+   v_corporation_id as corporation_id
   from qz.victims, qz.zkillmails, qz.killmails
   where
    zkm_id=km_id and
@@ -524,10 +533,10 @@ from (
             'dt1': period_from,
             'dt2': period_to,
         })
-        #  total     | cargo   |loss|killmail_id|solar_system_id|ship_type_id|damage_taken|solar_system|ship_type_name|
-        # -----------+---------+----+-----------+---------------+------------+------------+------------+--------------+
-        # 1203800956 |316623629| x  | 122808562 |       31001895|       28659|      540060|J132823     |Paladin       |
-        # 4270833526 |223322899|    | 123292414 |       30000162|       19722|      718370|Maila       |Naglfar       |
+        # total     |cargo    |loss |killmail_id|solar_system_id|pilot_id  |ship_type_id|damage_taken|alliance_id|corporation_id|pilot_name      |solar_system|ship_type_name|
+        # ----------+---------+-----+-----------+---------------+----------+------------+------------+-----------+--------------+----------------+------------+--------------+
+        # 2606168662|316623629| x   |  122808562|       31001895|2112509491|       28659|      540060|   99012896|     787611831|JohnWickgg Hadah|J132823     |Paladin       |
+        # 9921169230|223322899|     |  123292200|       30000162|2120220330|     1497815|       73793|   99003581|      98588384|Nicholas Kaga   |Maila       |              |
         if stat1 is not None:
             for s in stat1:
                 if not s[2]:  # win
@@ -538,10 +547,14 @@ from (
                               'cargo': int(s[1]),
                               'killmail_id': int(s[3]),
                               'solar_system_id': int(s[4]),
-                              'ship_type_id': int(s[5]),
-                              'damage_taken': int(s[6]),
-                              'solar_system': str(s[7]),
-                              'ship_type_name': str(s[8]),
+                              'pilot_id': int(s[5]),
+                              'ship_type_id': int(s[6]),
+                              'damage_taken': int(s[7]),
+                              'alliance_id': int(s[8]) if s[8] else None,
+                              'corporation_id': int(s[9]) if s[9] else None,
+                              'pilot_name': str(s[10]),
+                              'solar_system': str(s[11]),
+                              'ship_type_name': str(s[12]),
                               }
         return res
 

@@ -9,15 +9,18 @@ class FormattedDiscordStatisticsMessage:
                  period_from: datetime.datetime,
                  period_to: datetime.datetime,
                  stat: typing.Dict[str, typing.Dict[str, typing.Union[int, str]]],
-                 use_russian_style_ship_name: bool):
+                 use_russian_style_ship_name: bool,
+                 use_corporation_instead_alliance: bool):
         self.paginator: typing.Optional[discord.ext.commands.Paginator] = None
         self.embed: typing.Optional[discord.Embed] = None
         self.__period_from: datetime.datetime = period_from
         self.__period_to: datetime.datetime = period_to
         self.__stat: typing.Dict[str, typing.Dict[str, typing.Union[int, str]]] = stat
-        self.format(use_russian_style_ship_name)
+        self.format(use_russian_style_ship_name, use_corporation_instead_alliance)
 
-    def format(self, use_russian_style_ship_name: bool) -> None:
+    def format(self,
+               use_russian_style_ship_name: bool,
+               use_corporation_instead_alliance: bool) -> None:
         self.paginator = discord.ext.commands.Paginator(prefix='', suffix='')
         self.paginator.add_line(":red_circle: **Статистика подъехала**")
 
@@ -110,45 +113,54 @@ class FormattedDiscordStatisticsMessage:
         largest_win = self.__stat.get('largest_win')
         largest_loss = self.__stat.get('largest_loss')
 
-        if largest_win:
-            total: int = largest_win['total']
-            solar_system: str = largest_win['solar_system']
-            ship_type_id: int = largest_win['ship_type_id']
-            ship_type_name: str = largest_win['ship_type_name']
-            damage_taken: int = largest_win['damage_taken']
-            killmail_id: int = largest_win['killmail_id']
-            title: str = f"[**{solar_system} | {ship_type_name}**](https://zkillboard.com/kill/{killmail_id}/)"
-            cargo: int = largest_win['cargo']
-            cargo_additional: str = ""
-            if cargo:
-                cargo_additional = f" с `{self.isk_to_kkk(cargo)}` в карго"
-            self.embed = discord.Embed(
-                title=title,
-                description=f"Самая крупная победа на `{self.isk_to_kkk(total)}` в **{solar_system}** "
-                            f"над **{ship_type_name}**{cargo_additional}, "
-                            f"нанесено {damage_taken:,d} дамага.",
-                colour=0x2e6b4d)
-            self.embed.set_image(url=f"https://imageserver.eveonline.com/Type/{ship_type_id}_64.png")
+        if largest_win and largest_loss and largest_loss['total'] > largest_win['total']:
+            largest = largest_loss
+            is_largest_win: bool = False
+        else:
+            largest = largest_win if largest_win else largest_loss
+            is_largest_win: bool = True if largest_win else False
 
-        elif largest_loss:
-            total: int = largest_loss['total']
-            solar_system: str = largest_loss['solar_system']
-            ship_type_id: int = largest_loss['ship_type_id']
-            ship_type_name: str = largest_loss['ship_type_name']
-            damage_taken: int = largest_loss['damage_taken']
-            killmail_id: int = largest_loss['killmail_id']
-            title: str = f"[**{solar_system} | {ship_type_name}**](https://zkillboard.com/kill/{killmail_id}/)"
-            cargo: int = largest_win['cargo']
-            cargo_additional: str = ""
-            if cargo:
-                cargo_additional = f" с `{self.isk_to_kkk(cargo)}` в карго"
+        if largest:
+            total: int = largest['total']
+            solar_system: str = largest['solar_system']
+            ship_type_id: int = largest['ship_type_id']
+            ship_type_name: str = largest['ship_type_name']
+            damage_taken: int = largest['damage_taken']
+            killmail_id: int = largest['killmail_id']
+            cargo: int = largest['cargo']
+            cargo_additional: str = f" с `{self.isk_to_kkk(cargo)}` в карго" if cargo else ""
+            pilot_name: str = largest['pilot_name']
+            alliance_id: typing.Optional[int] = largest['alliance_id']
+            corporation_id: typing.Optional[int] = largest['corporation_id']
+
+            # выбор иконки, которая появится в footer-е
+            footer_icon: typing.Optional[str] = None
+            if not is_largest_win and use_corporation_instead_alliance and corporation_id:
+                footer_icon = f"https://images.evetech.net/corporations/{corporation_id}/logo?size=32"
+            elif alliance_id:
+                footer_icon = f"https://images.evetech.net/alliances/{alliance_id}/logo?size=32"
+            elif corporation_id:
+                footer_icon = f"https://images.evetech.net/corporations/{corporation_id}/logo?size=32"
+            # выбор пояснения для embed-а
+            if is_largest_win:
+                description: str = \
+                    f"Самая крупная победа на `{self.isk_to_kkk(total)}` в **{solar_system}** " + \
+                    f"над **{ship_type_name}**{cargo_additional}, нанесено {damage_taken:,d} дамага."
+            else:
+                description: str = \
+                    f"Самая крупная потеря **{ship_type_name}** на `{self.isk_to_kkk(total)}` " + \
+                    f"в **{solar_system}**{cargo_additional}, откачано {damage_taken:,d} дамага."
+
             self.embed = discord.Embed(
-                title=title,
-                description=f"Самая крупная потеря **{ship_type_name}** на `{self.isk_to_kkk(total)}` "
-                            f"в **{solar_system}**{cargo_additional}, "
-                            f"откачано {damage_taken:,d} дамага.",
-                colour=0xC85C70)
+                title=f"**{solar_system} | {ship_type_name}**",
+                url=f"https://zkillboard.com/kill/{killmail_id}/",
+                description=description,
+                colour=0x2e6b4d if is_largest_win else 0xC85C70)
             self.embed.set_image(url=f"https://imageserver.eveonline.com/Type/{ship_type_id}_64.png")
+            if footer_icon:
+                self.embed.set_footer(text=pilot_name, icon_url=footer_icon)
+            else:
+                self.embed.set_footer(text=pilot_name)
 
     @staticmethod
     def cnt_to_ships_loss(cnt: int, use_russian_style_ship_name: bool) -> str:

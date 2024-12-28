@@ -122,7 +122,8 @@ class MyClient(discord.Client):
                 at_from,
                 at_to,
                 stat,
-                q_settings.g_use_russian_style_ship_name)
+                q_settings.g_use_russian_style_ship_name,
+                q_settings.g_use_corporation_emblem_instead_alliance)
             if fdm.paginator:
                 e = fdm.embed
                 for page in fdm.paginator.pages:
