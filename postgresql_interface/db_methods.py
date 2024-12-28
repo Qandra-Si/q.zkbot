@@ -457,6 +457,7 @@ from (
         stat1 = self.db.select_all_rows("""
 select
  round(x.total::numeric,0) as total,
+ round(x.cargo::numeric,0) as cargo,
  x.loss,
  x.killmail_id,
  x.solar_system_id,
@@ -468,6 +469,7 @@ select
 from (
  select
   x.total,
+  x.cargo,
   x.loss,
   x.killmail_id,
   x.solar_system_id,
@@ -476,7 +478,8 @@ from (
   x.damage_taken
  from (
   select
-   coalesce(zkm_dropped_value+zkm_dropped_value,0) as total,
+   coalesce(zkm_total_value,0) as total,
+   coalesce(zkm_total_value-zkm_fitted_value,0) as cargo,
    true as loss,
    v_killmail_id as killmail_id,
    km_solar_system_id as solar_system_id,
@@ -498,7 +501,8 @@ from (
   *
  from (
   select
-   coalesce(zkm_dropped_value+zkm_dropped_value,0) as total,
+   coalesce(zkm_total_value,0) as total,
+   coalesce(zkm_total_value-zkm_fitted_value,0) as cargo,
    false as loss,
    v_killmail_id as killmail_id,
    km_solar_system_id as solar_system_id,
@@ -520,23 +524,24 @@ from (
             'dt1': period_from,
             'dt2': period_to,
         })
-        #  total     |loss|killmail_id|solar_system_id|ship_type_id|damage_taken|solar_system|ship_type_name|
-        # -----------+----+-- --------+---------------+------------+------------+------------+--------------+
-        # 1203800956 | x  | 122808562 |       31001895|       28659|      540060|J132823     |Paladin       |
-        # 4270833526 |    | 123292414 |       30000162|       19722|      718370|Maila       |Naglfar       |
+        #  total     | cargo   |loss|killmail_id|solar_system_id|ship_type_id|damage_taken|solar_system|ship_type_name|
+        # -----------+---------+----+-----------+---------------+------------+------------+------------+--------------+
+        # 1203800956 |316623629| x  | 122808562 |       31001895|       28659|      540060|J132823     |Paladin       |
+        # 4270833526 |223322899|    | 123292414 |       30000162|       19722|      718370|Maila       |Naglfar       |
         if stat1 is not None:
             for s in stat1:
-                if not s[1]:  # win
+                if not s[2]:  # win
                     title = "largest_win"
                 else:  # loss
                     title = "largest_loss"
                 res[title] = {'total': int(s[0]),
-                              'killmail_id': int(s[2]),
-                              'solar_system_id': int(s[3]),
-                              'ship_type_id': int(s[4]),
-                              'damage_taken': int(s[5]),
-                              'solar_system': int(s[6]),
-                              'ship_type_name': int(s[7]),
+                              'cargo': int(s[1]),
+                              'killmail_id': int(s[3]),
+                              'solar_system_id': int(s[4]),
+                              'ship_type_id': int(s[5]),
+                              'damage_taken': int(s[6]),
+                              'solar_system': str(s[7]),
+                              'ship_type_name': str(s[8]),
                               }
         return res
 

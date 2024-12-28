@@ -116,11 +116,19 @@ class FormattedDiscordStatisticsMessage:
             ship_type_id: int = largest_win['ship_type_id']
             ship_type_name: str = largest_win['ship_type_name']
             damage_taken: int = largest_win['damage_taken']
-            embed = discord.Embed(title=f"**{solar_system} | {ship_type_name}**",
-                                  description=f"Самая крупная победа на {self.isk_to_kkk(total)} в {solar_system} "
-                                              f"над {ship_type_name}, нанесено {damage_taken:,d} дамага.",
-                                  colour=0x2e6b4d)
-            embed.set_image(url=f"https://imageserver.eveonline.com/Type/{ship_type_id}_64.png")
+            killmail_id: int = largest_win['killmail_id']
+            title: str = f"[**{solar_system} | {ship_type_name}**](https://zkillboard.com/kill/{killmail_id}/)"
+            cargo: int = largest_win['cargo']
+            cargo_additional: str = ""
+            if cargo:
+                cargo_additional = f" с `{self.isk_to_kkk(cargo)}` в карго"
+            self.embed = discord.Embed(
+                title=title,
+                description=f"Самая крупная победа на `{self.isk_to_kkk(total)}` в **{solar_system}** "
+                            f"над **{ship_type_name}**{cargo_additional}, "
+                            f"нанесено {damage_taken:,d} дамага.",
+                colour=0x2e6b4d)
+            self.embed.set_image(url=f"https://imageserver.eveonline.com/Type/{ship_type_id}_64.png")
 
         elif largest_loss:
             total: int = largest_loss['total']
@@ -128,11 +136,19 @@ class FormattedDiscordStatisticsMessage:
             ship_type_id: int = largest_loss['ship_type_id']
             ship_type_name: str = largest_loss['ship_type_name']
             damage_taken: int = largest_loss['damage_taken']
-            embed = discord.Embed(title=f"**{solar_system} | {ship_type_name}**",
-                                  description=f"Самая крупная потеря на {self.isk_to_kkk(total)} в {solar_system} "
-                                              f"над {ship_type_name}, откачано {damage_taken:,d} дамага.",
-                                  colour=0xC85C70)
-            embed.set_image(url=f"https://imageserver.eveonline.com/Type/{ship_type_id}_64.png")
+            killmail_id: int = largest_loss['killmail_id']
+            title: str = f"[**{solar_system} | {ship_type_name}**](https://zkillboard.com/kill/{killmail_id}/)"
+            cargo: int = largest_win['cargo']
+            cargo_additional: str = ""
+            if cargo:
+                cargo_additional = f" с `{self.isk_to_kkk(cargo)}` в карго"
+            self.embed = discord.Embed(
+                title=title,
+                description=f"Самая крупная потеря **{ship_type_name}** на `{self.isk_to_kkk(total)}` "
+                            f"в **{solar_system}**{cargo_additional}, "
+                            f"откачано {damage_taken:,d} дамага.",
+                colour=0xC85C70)
+            self.embed.set_image(url=f"https://imageserver.eveonline.com/Type/{ship_type_id}_64.png")
 
     @staticmethod
     def cnt_to_ships_loss(cnt: int, use_russian_style_ship_name: bool) -> str:
