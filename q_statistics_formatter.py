@@ -51,9 +51,9 @@ class FormattedDiscordStatisticsMessage:
                 f"{additional}.")
 
         if npc_loss:
-            cnt: int = solo_loss['cnt']
-            destroyed: int = solo_loss['destroyed']
-            dropped: int = solo_loss['dropped']
+            cnt: int = npc_loss['cnt']
+            destroyed: int = npc_loss['destroyed']
+            dropped: int = npc_loss['dropped']
             total: int = destroyed + dropped
             self.paginator.add_line(
                 f":crab: Об непись {self.cnt_to_ships_loss(cnt)} на `{self.isk_to_kkk(total)}`.")
