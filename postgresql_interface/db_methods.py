@@ -395,14 +395,8 @@ where zkm_id=%(id)s and zkm_published;""",
             self,
             tracked_corporation_ids: typing.List[int],
             period_from: datetime.datetime,
-            period_to: datetime.datetime) -> typing.Dict[str, typing.Dict[str, int]]:
-        #  loss | solo | npc | cnt |      fitted |     dropped |   destroyed
-        #  -----+------+-----+-----+-------------+-------------+--------------
-        #       | x    |     |  53 |  5034742733 |  1102469593 |  4400278372 |
-        #  x    | x    |     |  13 |  1085535457 |   552942552 |   679594402 |
-        #  x    |      | x   |  11 |   709857162 |   245291632 |   820249454 |
-        #       |      |     | 231 | 79621867935 | 15825315770 | 70868842878 |
-        #  x    |      |     | 119 | 13971791687 |  3342625572 | 14130203708 |
+            period_to: datetime.datetime) -> typing.Dict[str, typing.Dict[str, typing.Union[int, str]]]:
+        res: typing.Dict[str, typing.Dict[str, int]] = {}
         stat0 = self.db.select_all_rows("""
 select
  x.loss,
@@ -437,7 +431,13 @@ from (
             'dt1': period_from,
             'dt2': period_to,
         })
-        res: typing.Dict[str, typing.Dict[str, int]] = {}
+        #  loss | solo | npc | cnt |      fitted |     dropped |   destroyed |
+        #  -----+------+-----+-----+-------------+-------------+-------------+
+        #       | x    |     |  53 |  5034742733 |  1102469593 |  4400278372 |
+        #  x    | x    |     |  13 |  1085535457 |   552942552 |   679594402 |
+        #  x    |      | x   |  11 |   709857162 |   245291632 |   820249454 |
+        #       |      |     | 231 | 79621867935 | 15825315770 | 70868842878 |
+        #  x    |      |     | 119 | 13971791687 |  3342625572 | 14130203708 |
         if stat0 is not None:
             for s in stat0:
                 if not s[0]:  # win
@@ -453,6 +453,91 @@ from (
                     else:  # gang
                         title = 'gang_loss'
                 res[title] = {'cnt': int(s[3]), 'fitted': int(s[4]), 'dropped': int(s[5]), 'destroyed': int(s[6])}
+
+        stat1 = self.db.select_all_rows("""
+select
+ round(x.total::numeric,0) as total,
+ x.loss,
+ x.killmail_id,
+ x.solar_system_id,
+ --x.pilot_id,
+ x.ship_type_id,
+ x.damage_taken,
+ (select ess_name from qz.esi_systems where ess_system_id=x.solar_system_id) as solar_system,
+ (select sdet_type_name from qz.eve_sde_type_ids where sdet_type_id=x.ship_type_id) as ship_type_name
+from (
+ select
+  x.total,
+  x.loss,
+  x.killmail_id,
+  x.solar_system_id,
+  --x.pilot_id
+  x.ship_type_id,
+  x.damage_taken
+ from (
+  select
+   coalesce(zkm_dropped_value+zkm_dropped_value,0) as total,
+   true as loss,
+   v_killmail_id as killmail_id,
+   km_solar_system_id as solar_system_id,
+   --v_character_id as pilot_id,
+   v_damage_taken as damage_taken,
+   v_ship_type_id as ship_type_id
+  from qz.victims, qz.zkillmails, qz.killmails
+  where
+   zkm_id=km_id and
+   zkm_id=v_killmail_id and
+   v_corporation_id in (select * from unnest(%(trc)s)) and
+   km_time>TIMESTAMP WITHOUT TIME ZONE %(dt1)s and
+  km_time<=TIMESTAMP WITHOUT TIME ZONE %(dt2)s
+  order by 1 desc
+  limit 1
+ ) x
+  union
+ select
+  *
+ from (
+  select
+   coalesce(zkm_dropped_value+zkm_dropped_value,0) as total,
+   false as loss,
+   v_killmail_id as killmail_id,
+   km_solar_system_id as solar_system_id,
+   -- v_character_id as pilot_id,
+   v_ship_type_id as ship_type_id,
+   v_damage_taken as damage_taken
+  from qz.victims, qz.zkillmails, qz.killmails
+  where
+   zkm_id=km_id and
+   zkm_id=v_killmail_id and
+   v_corporation_id not in (select * from unnest(%(trc)s)) and
+   km_time>TIMESTAMP WITHOUT TIME ZONE %(dt1)s and
+  km_time<=TIMESTAMP WITHOUT TIME ZONE %(dt2)s
+  order by 1 desc
+  limit 1
+ ) z
+) x;""", {
+            'trc': list(tracked_corporation_ids),
+            'dt1': period_from,
+            'dt2': period_to,
+        })
+        #  total     |loss|killmail_id|solar_system_id|ship_type_id|damage_taken|solar_system|ship_type_name|
+        # -----------+----+-- --------+---------------+------------+------------+------------+--------------+
+        # 1203800956 | x  | 122808562 |       31001895|       28659|      540060|J132823     |Paladin       |
+        # 4270833526 |    | 123292414 |       30000162|       19722|      718370|Maila       |Naglfar       |
+        if stat1 is not None:
+            for s in stat1:
+                if not s[1]:  # win
+                    title = "largest_win"
+                else:  # loss
+                    title = "largest_loss"
+                res[title] = {'total': int(s[0]),
+                              'killmail_id': int(s[2]),
+                              'solar_system_id': int(s[3]),
+                              'ship_type_id': int(s[4]),
+                              'damage_taken': int(s[5]),
+                              'solar_system': int(s[6]),
+                              'ship_type_name': int(s[7]),
+                              }
         return res
 
     # -------------------------------------------------------------------------

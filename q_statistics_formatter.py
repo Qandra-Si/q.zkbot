@@ -8,13 +8,13 @@ class FormattedDiscordStatisticsMessage:
     def __init__(self,
                  period_from: datetime.datetime,
                  period_to: datetime.datetime,
-                 stat: typing.Dict[str, typing.Dict[str, int]],
+                 stat: typing.Dict[str, typing.Dict[str, typing.Union[int, str]]],
                  use_russian_style_ship_name: bool):
         self.paginator: typing.Optional[discord.ext.commands.Paginator] = None
         self.embed: typing.Optional[discord.Embed] = None
         self.__period_from: datetime.datetime = period_from
         self.__period_to: datetime.datetime = period_to
-        self.__stat: typing.Dict[str, typing.Dict[str, int]] = stat
+        self.__stat: typing.Dict[str, typing.Dict[str, typing.Union[int, str]]] = stat
         self.format(use_russian_style_ship_name)
 
     def format(self, use_russian_style_ship_name: bool) -> None:
@@ -106,6 +106,33 @@ class FormattedDiscordStatisticsMessage:
                 self.paginator.add_line("Соло побед не было, флотами не летали.")
                 self.paginator.add_line("— Ленятся наверное, — подумал Штирлиц.")
                 self.paginator.add_line("— Или очень не везло, — усмехнулся Мюллер.")
+
+        largest_win = self.__stat.get('largest_win')
+        largest_loss = self.__stat.get('largest_loss')
+
+        if largest_win:
+            total: int = largest_win['total']
+            solar_system: str = largest_win['solar_system']
+            ship_type_id: int = largest_win['ship_type_id']
+            ship_type_name: str = largest_win['ship_type_name']
+            damage_taken: int = largest_win['damage_taken']
+            embed = discord.Embed(title=f"**{solar_system} | {ship_type_name}**",
+                                  description=f"Самая крупная победа на {self.isk_to_kkk(total)} в {solar_system} "
+                                              f"над {ship_type_name}, нанесено {damage_taken:,d} дамага.",
+                                  colour=0x2e6b4d)
+            embed.set_image(url=f"https://imageserver.eveonline.com/Type/{ship_type_id}_64.png")
+
+        elif largest_loss:
+            total: int = largest_loss['total']
+            solar_system: str = largest_loss['solar_system']
+            ship_type_id: int = largest_loss['ship_type_id']
+            ship_type_name: str = largest_loss['ship_type_name']
+            damage_taken: int = largest_loss['damage_taken']
+            embed = discord.Embed(title=f"**{solar_system} | {ship_type_name}**",
+                                  description=f"Самая крупная потеря на {self.isk_to_kkk(total)} в {solar_system} "
+                                              f"над {ship_type_name}, откачано {damage_taken:,d} дамага.",
+                                  colour=0xC85C70)
+            embed.set_image(url=f"https://imageserver.eveonline.com/Type/{ship_type_id}_64.png")
 
     @staticmethod
     def cnt_to_ships_loss(cnt: int, use_russian_style_ship_name: bool) -> str:
