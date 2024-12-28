@@ -17,8 +17,6 @@ class FormattedDiscordStatisticsMessage:
         self.format()
 
     def format(self) -> None:
-        if not self.__stat: return
-
         self.paginator = discord.ext.commands.Paginator(prefix='', suffix='')
         self.paginator.add_line(":red_circle: **Статистика подъехала**")
 
@@ -29,24 +27,26 @@ class FormattedDiscordStatisticsMessage:
             cnt: int = solo_loss['cnt']
             destroyed: int = solo_loss['fitted']
             dropped: int = solo_loss['dropped']
+            total: int = destroyed + dropped
             additional: str = ""
             if not gang_loss:
                 additional = ", :tada: об ганги не убились ни разу"
             self.paginator.add_line(
                 f":people_wrestling: Мы слились в честном соло-pvp {self.cnt_to_times(cnt)}, "
-                f"потеряв `{self.isk_to_kkk(destroyed)}` (`{self.isk_to_kkk(dropped)}` досталось врагу)"
+                f"потеряв `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` досталось врагу)"
                 f"{additional}.")
 
         if gang_loss:
             cnt: int = gang_loss['cnt']
             destroyed: int = gang_loss['fitted']
             dropped: int = gang_loss['dropped']
+            total: int = destroyed + dropped
             additional: str = ""
-            if not gang_loss:
+            if not solo_loss:
                 additional = ", :no_good: потерь в соло-pvp не было"
             self.paginator.add_line(
                 f":person_in_manual_wheelchair_facing_right: Об ганги мы убились {self.cnt_to_times(cnt)}, "
-                f"потеряв `{self.isk_to_kkk(destroyed)}` (`{self.isk_to_kkk(dropped)}` досталось врагу)"
+                f"потеряв `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` досталось врагу)"
                 f"{additional}.")
 
         solo_win = self.__stat.get('solo_win')
@@ -56,24 +56,26 @@ class FormattedDiscordStatisticsMessage:
             cnt: int = solo_win['cnt']
             destroyed: int = solo_win['fitted']
             dropped: int = solo_win['dropped']
+            total: int = destroyed + dropped
             additional: str = ""
             if not gang_win:
                 additional = ", :zzz: в гангах никто не летал и ничего не убил"
             self.paginator.add_line(
                 f":clap: В честном соло-pvp мы победили {self.cnt_to_enemies(cnt)}, "
-                f"уничтожив `{self.isk_to_kkk(destroyed)}` (`{self.isk_to_kkk(dropped)}` дропнулось)"
+                f"уничтожив `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` дропнулось)"
                 f"{additional}.")
 
         if gang_win:
             cnt: int = gang_win['cnt']
             destroyed: int = gang_win['fitted']
             dropped: int = gang_win['dropped']
+            total: int = destroyed + dropped
             additional: str = ""
             if not solo_win:
                 additional = ", :martial_arts_uniform: в соло никто ничего не убил"
             self.paginator.add_line(
                 f":pirate_flag: Флотами было уничтожено {self.cnt_to_enemies(cnt)}, "
-                f"на сумму `{self.isk_to_kkk(destroyed)}` (`{self.isk_to_kkk(dropped)}` дропнулось)"
+                f"на сумму `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` дропнулось)"
                 f"{additional}.")
 
         if not solo_loss and not gang_loss and not solo_win and not gang_win:
