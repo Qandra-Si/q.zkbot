@@ -28,8 +28,8 @@ class FormattedDiscordStatisticsMessage:
             destroyed: int = s['fitted']
             dropped: int = s['dropped']
             self.paginator.add_line(
-                f"Мы слились в честном соло-pvp {cnt} раз, "
-                f"потеряв {destroyed} ISK ({dropped} ISK досталось врагу).")
+                f"Мы слились в честном соло-pvp {self.cnt_to_times(cnt)}, "
+                f"потеряв `{self.isk_to_kkk(destroyed)}` (`{self.isk_to_kkk(dropped)}` досталось врагу).")
 
         s = self.__stat.get('gang_loss')
         if s:
@@ -37,8 +37,8 @@ class FormattedDiscordStatisticsMessage:
             destroyed: int = s['fitted']
             dropped: int = s['dropped']
             self.paginator.add_line(
-                f"Об ганги мы убились {cnt} раз, "
-                f"потеряв {destroyed} ISK ({dropped} ISK досталось врагу).")
+                f"Об ганги мы убились {self.cnt_to_times(cnt)}, "
+                f"потеряв `{self.isk_to_kkk(destroyed)}` (`{self.isk_to_kkk(dropped)}` досталось врагу).")
 
         s = self.__stat.get('solo_win')
         if s:
@@ -46,8 +46,8 @@ class FormattedDiscordStatisticsMessage:
             destroyed: int = s['fitted']
             dropped: int = s['dropped']
             self.paginator.add_line(
-                f"В честном соло-pvp мы победили {cnt} раз, "
-                f"уничтожив {destroyed} ISK ({dropped} ISK дропнулось).")
+                f"В честном соло-pvp мы победили {self.cnt_to_enemies(cnt)}, "
+                f"уничтожив `{self.isk_to_kkk(destroyed)}` (`{self.isk_to_kkk(dropped)}` дропнулось).")
 
         s = self.__stat.get('gang_win')
         if s:
@@ -55,5 +55,46 @@ class FormattedDiscordStatisticsMessage:
             destroyed: int = s['fitted']
             dropped: int = s['dropped']
             self.paginator.add_line(
-                f"Флотами было уничтожено {cnt} противников, "
-                f"на сумму {destroyed} ISK ({dropped} ISK дропнулось).")
+                f"Флотами было уничтожено {self.cnt_to_enemies(cnt)}, "
+                f"на сумму `{self.isk_to_kkk(destroyed)}` (`{self.isk_to_kkk(dropped)}` дропнулось).")
+
+    @staticmethod
+    def cnt_to_times(cnt: int) -> str:
+        modulo: int = cnt % 100
+        if 5 <= modulo <= 20:
+            return f"{cnt} раз"
+        else:
+            modulo = cnt % 10
+            if 2 <= modulo <= 4:
+                return f"{cnt} раза"
+            elif 0 <= modulo <= 1:
+                return f"{cnt} раз"
+
+    @staticmethod
+    def cnt_to_enemies(cnt: int) -> str:
+        modulo: int = cnt % 100
+        if 5 <= modulo <= 20:
+            return f"{cnt} противников"
+        else:
+            modulo = cnt % 10
+            if (0 == modulo) or (5 <= modulo <= 9):
+                return f"{cnt} противников"
+            elif 2 <= modulo <= 4:
+                return f"{cnt} противника"
+            elif modulo == 1:
+                return f"{cnt} противник"
+
+    @staticmethod
+    def isk_to_kkk(isk: int) -> str:
+        if isk <= 950049:
+            # 950к..10к
+            return f'{isk/1000:,.1f}к'
+        elif isk <= 950049999:
+            # 950кк..1.0кк
+            return f'{isk/1000000:,.1f}кк'
+        elif isk <= 950049999999:
+            # 950ккк..1.0ккк
+            return f'{isk/1000000:,.1f}ккк'
+        else:
+            # 999.9трлн..1.0трлн
+            return f'{isk/1000000000:,.1f}трлн'
