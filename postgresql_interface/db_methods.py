@@ -414,9 +414,9 @@ from (
  select
   -- km_time,
   count(1) as cnt,
-  sum(zkm_fitted_value) as fitted,
-  sum(zkm_dropped_value) as dropped,
-  sum(zkm_destroyed_value) as destroyed,
+  sum(coalesce(zkm_fitted_value,0)) as fitted,
+  sum(coalesce(zkm_dropped_value,0)) as dropped,
+  sum(coalesce(zkm_destroyed_value,0)) as destroyed,
   --zkm_npc as npc,
   zkm_solo as solo,
   v_corporation_id in (select * from unnest(%(trc)s)) as loss

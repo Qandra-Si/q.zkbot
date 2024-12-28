@@ -70,7 +70,7 @@ class FormattedDiscordKillmailMessage:
                 # Бой был выигран в соло пилотом Qandra Si на Tristan
                 attackers_txt += f" на **{solo_ship_name}**"
         else:
-            attackers_txt: str = "Его добил"
+            attackers_txt: str = "Его добил(а)"
             if final_character_id:
                 # Его добил Qandra Si
                 attackers_txt += " "

@@ -20,7 +20,7 @@ class FormattedDiscordStatisticsMessage:
         if not self.__stat: return
 
         self.paginator = discord.ext.commands.Paginator(prefix='', suffix='')
-        self.paginator.add_line("**:red_circle: Статистика подъехала**")
+        self.paginator.add_line(":red_circle: **Статистика подъехала**")
 
         solo_loss = self.__stat.get('solo_loss')
         gang_loss = self.__stat.get('gang_loss')
@@ -31,7 +31,7 @@ class FormattedDiscordStatisticsMessage:
             dropped: int = solo_loss['dropped']
             additional: str = ""
             if not gang_loss:
-                additional = ", :tada: при этом об ганги не убились ни разу"
+                additional = ", :tada: об ганги не убились ни разу"
             self.paginator.add_line(
                 f":people_wrestling: Мы слились в честном соло-pvp {self.cnt_to_times(cnt)}, "
                 f"потеряв `{self.isk_to_kkk(destroyed)}` (`{self.isk_to_kkk(dropped)}` досталось врагу)"
@@ -58,7 +58,7 @@ class FormattedDiscordStatisticsMessage:
             dropped: int = solo_win['dropped']
             additional: str = ""
             if not gang_win:
-                additional = ", :zzz: при этом в гангах никто не летал и ничего не убил"
+                additional = ", :zzz: в гангах никто не летал и ничего не убил"
             self.paginator.add_line(
                 f":clap: В честном соло-pvp мы победили {self.cnt_to_enemies(cnt)}, "
                 f"уничтожив `{self.isk_to_kkk(destroyed)}` (`{self.isk_to_kkk(dropped)}` дропнулось)"
@@ -70,7 +70,7 @@ class FormattedDiscordStatisticsMessage:
             dropped: int = gang_win['dropped']
             additional: str = ""
             if not solo_win:
-                additional = ", :martial_arts_uniform: а вот в соло никто ничего не убил"
+                additional = ", :martial_arts_uniform: в соло никто ничего не убил"
             self.paginator.add_line(
                 f":pirate_flag: Флотами было уничтожено {self.cnt_to_enemies(cnt)}, "
                 f"на сумму `{self.isk_to_kkk(destroyed)}` (`{self.isk_to_kkk(dropped)}` дропнулось)"
