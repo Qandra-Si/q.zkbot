@@ -65,7 +65,9 @@ class FormattedDiscordStatisticsMessage:
             return f"{cnt} раз"
         else:
             modulo = cnt % 10
-            if 2 <= modulo <= 4:
+            if 5 <= modulo <= 9:
+                return f"{cnt} раз"
+            elif 2 <= modulo <= 4:
                 return f"{cnt} раза"
             elif 0 <= modulo <= 1:
                 return f"{cnt} раз"
@@ -88,13 +90,25 @@ class FormattedDiscordStatisticsMessage:
     def isk_to_kkk(isk: int) -> str:
         if isk <= 950049:
             # 950к..10к
-            return f'{isk/1000:,.1f}к'
+            res: str = f'{isk/1000:,.1f}к'
+            if res[-3:] == '.0к':
+                res = res[-3:] + 'к'
+            return res
         elif isk <= 950049999:
             # 950кк..1.0кк
-            return f'{isk/1000000:,.1f}кк'
+            res: str = f'{isk/1000000:,.1f}кк'
+            if res[-4:] == '.0кк':
+                res = res[-4:] + 'кк'
+            return res
         elif isk <= 950049999999:
             # 950ккк..1.0ккк
-            return f'{isk/1000000:,.1f}ккк'
+            res: str = f'{isk/1000000000:,.1f}млрд'
+            if res[-6:] == '.0млрд':
+                res = res[-6:] + 'млрд'
+            return res
         else:
             # 999.9трлн..1.0трлн
-            return f'{isk/1000000000:,.1f}трлн'
+            res: str = f'{isk/1000000000000:,.1f}трлн'
+            if res[-6:] == '.0трлн':
+                res = res[-6:] + 'трлн'
+            return res
