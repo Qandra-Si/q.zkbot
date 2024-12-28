@@ -8,15 +8,16 @@ class FormattedDiscordStatisticsMessage:
     def __init__(self,
                  period_from: datetime.datetime,
                  period_to: datetime.datetime,
-                 stat: typing.Dict[str, typing.Dict[str, int]]):
+                 stat: typing.Dict[str, typing.Dict[str, int]],
+                 use_russian_style_ship_name: bool):
         self.paginator: typing.Optional[discord.ext.commands.Paginator] = None
         self.embed: typing.Optional[discord.Embed] = None
         self.__period_from: datetime.datetime = period_from
         self.__period_to: datetime.datetime = period_to
         self.__stat: typing.Dict[str, typing.Dict[str, int]] = stat
-        self.format()
+        self.format(use_russian_style_ship_name)
 
-    def format(self) -> None:
+    def format(self, use_russian_style_ship_name: bool) -> None:
         self.paginator = discord.ext.commands.Paginator(prefix='', suffix='')
         self.paginator.add_line(":red_circle: **Статистика подъехала**")
 
@@ -56,7 +57,8 @@ class FormattedDiscordStatisticsMessage:
             dropped: int = npc_loss['dropped']
             total: int = destroyed + dropped
             self.paginator.add_line(
-                f":crab: Об непись {self.cnt_to_ships_loss(cnt)} на `{self.isk_to_kkk(total)}`.")
+                f":crab: Об непись {self.cnt_to_ships_loss(cnt, use_russian_style_ship_name)} на "
+                f"`{self.isk_to_kkk(total)}`.")
 
         solo_win = self.__stat.get('solo_win')
         gang_win = self.__stat.get('gang_win')
@@ -71,7 +73,7 @@ class FormattedDiscordStatisticsMessage:
                 additional = ", :zzz: в гангах никто не летал и ничего не убил"
             self.paginator.add_line(
                 f":clap: В честном соло-pvp мы победили {self.cnt_to_enemies(cnt)}, "
-                f"уничтожив `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` дропнулось)"
+                f"уничтожив `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` залутано)"
                 f"{additional}.")
 
         if gang_win:
@@ -83,8 +85,8 @@ class FormattedDiscordStatisticsMessage:
             if not solo_win:
                 additional = ", :martial_arts_uniform: в соло никто ничего не убил"
             self.paginator.add_line(
-                f":pirate_flag: Флотами было уничтожено {self.cnt_to_enemies(cnt)}, "
-                f"на сумму `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` дропнулось)"
+                f":pirate_flag: Флотами {self.cnt_to_ships_wins(cnt, use_russian_style_ship_name)} "
+                f"на сумму `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` залутано)"
                 f"{additional}.")
 
         if not solo_loss and not gang_loss and not solo_win and not gang_win:
@@ -106,18 +108,32 @@ class FormattedDiscordStatisticsMessage:
                 self.paginator.add_line("— Или очень не везло, — усмехнулся Мюллер.")
 
     @staticmethod
-    def cnt_to_ships_loss(cnt: int) -> str:
+    def cnt_to_ships_loss(cnt: int, use_russian_style_ship_name: bool) -> str:
         modulo: int = cnt % 100
         if 5 <= modulo <= 20:
-            return f"потеряно {cnt} корабликов"
+            return f"потеряно {cnt} {'корабликов' if use_russian_style_ship_name else 'шипов'}"
         else:
             modulo = cnt % 10
             if (0 == modulo) or (5 <= modulo <= 9):
-                return f"потеряно {cnt} корабликов"
+                return f"потеряно {cnt} {'корабликов' if use_russian_style_ship_name else 'шипов'}"
             elif 2 <= modulo <= 4:
-                return f"потеряно {cnt} кораблика"
+                return f"потеряно {cnt} {'кораблика' if use_russian_style_ship_name else 'шипа'}"
             elif 1 == modulo:
-                return f"потерян {cnt} кораблик"
+                return f"потерян {cnt} {'кораблик' if use_russian_style_ship_name else 'шип'}"
+
+    @staticmethod
+    def cnt_to_ships_wins(cnt: int, use_russian_style_ship_name: bool) -> str:
+        modulo: int = cnt % 100
+        if 5 <= modulo <= 20:
+            return f"настреляли {cnt} {'корабликов' if use_russian_style_ship_name else 'шипов'}"
+        else:
+            modulo = cnt % 10
+            if (0 == modulo) or (5 <= modulo <= 9):
+                return f"настреляли {cnt} {'корабликов' if use_russian_style_ship_name else 'шипов'}"
+            elif 2 <= modulo <= 4:
+                return f"убили {cnt} {'кораблика' if use_russian_style_ship_name else 'шипа'}"
+            elif 1 == modulo:
+                return f"убили {cnt} {'кораблик' if use_russian_style_ship_name else 'шип'}"
 
     @staticmethod
     def cnt_to_times(cnt: int) -> str:

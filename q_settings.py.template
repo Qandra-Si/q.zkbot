@@ -40,3 +40,7 @@ q_tracked_corporations: typing.List[int] = [000000000]  # <-- this is the value 
 # с помощью следующей настройки можно указать, чтобы в footer-е появлялся значёк крпорации, а не альянса, в тех
 # случаях, когда происходит потеря tracked-корабля
 g_use_corporation_emblem_instead_alliance: bool = False
+# с помощью следующей настройки можно указать наименование потерь в статистике:
+#  * True - "потеряно 5 корабликов"
+#  * False - "потерян 31 шип"
+g_use_russian_style_ship_name: bool = True

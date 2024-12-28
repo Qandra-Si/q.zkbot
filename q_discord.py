@@ -121,7 +121,8 @@ class MyClient(discord.Client):
             fdm: fms.FormattedDiscordStatisticsMessage = fms.FormattedDiscordStatisticsMessage(
                 at_from,
                 at_to,
-                stat)
+                stat,
+                q_settings.g_use_russian_style_ship_name)
             if fdm.paginator:
                 e = fdm.embed
                 for page in fdm.paginator.pages:
