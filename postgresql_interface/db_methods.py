@@ -396,16 +396,18 @@ where zkm_id=%(id)s and zkm_published;""",
             tracked_corporation_ids: typing.List[int],
             period_from: datetime.datetime,
             period_to: datetime.datetime) -> typing.Dict[str, typing.Dict[str, int]]:
-        #  loss | solo | cnt |      fitted |    dropped |   destroyed
-        # ------+------+-----+-------------+------------+-------------
-        #  f    | f    |  37 | 32542496114 | 7093119508 | 28509244868
-        #  f    | t    |   1 |    11411268 |    5125540 |     6296514
-        #  t    | f    |   4 |   702828556 |   63163918 |   824436259
+        #  loss | solo | npc | cnt |      fitted |     dropped |   destroyed
+        #  -----+------+-----+-----+-------------+-------------+--------------
+        #       | x    |     |  53 |  5034742733 |  1102469593 |  4400278372 |
+        #  x    | x    |     |  13 |  1085535457 |   552942552 |   679594402 |
+        #  x    |      | x   |  11 |   709857162 |   245291632 |   820249454 |
+        #       |      |     | 231 | 79621867935 | 15825315770 | 70868842878 |
+        #  x    |      |     | 119 | 13971791687 |  3342625572 | 14130203708 |
         stat0 = self.db.select_all_rows("""
 select
  x.loss,
  x.solo,
- --x.npc,
+ x.npc,
  x.cnt,
  round(x.fitted::numeric,0) as fitted,
  round(x.dropped::numeric,0) as dropped,
@@ -417,7 +419,7 @@ from (
   sum(coalesce(zkm_fitted_value,0)) as fitted,
   sum(coalesce(zkm_dropped_value,0)) as dropped,
   sum(coalesce(zkm_destroyed_value,0)) as destroyed,
-  --zkm_npc as npc,
+  zkm_npc as npc,
   zkm_solo as solo,
   v_corporation_id in (select * from unnest(%(trc)s)) as loss
  from
@@ -429,7 +431,7 @@ from (
   zkm_id=v_killmail_id and
   km_time>TIMESTAMP WITHOUT TIME ZONE %(dt1)s and
   km_time<=TIMESTAMP WITHOUT TIME ZONE %(dt2)s
- group by 6, zkm_solo --,zkm_npc
+ group by 7, zkm_solo, zkm_npc
 ) x;""", {
             'trc': list(tracked_corporation_ids),
             'dt1': period_from,
@@ -444,11 +446,13 @@ from (
                     else:  # gang
                         title = 'gang_win'
                 else:  # loss
-                    if s[1]:  # solo
+                    if s[2]:  # npc
+                        title = 'npc_loss'
+                    elif s[1]:  # solo
                         title = 'solo_loss'
                     else:  # gang
                         title = 'gang_loss'
-                res[title] = {'cnt': int(s[2]), 'fitted': int(s[3]), 'dropped': int(s[4]), 'destroyed': int(s[5])}
+                res[title] = {'cnt': int(s[3]), 'fitted': int(s[4]), 'dropped': int(s[5]), 'destroyed': int(s[6])}
         return res
 
     # -------------------------------------------------------------------------

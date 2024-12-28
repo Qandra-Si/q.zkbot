@@ -20,12 +20,13 @@ class FormattedDiscordStatisticsMessage:
         self.paginator = discord.ext.commands.Paginator(prefix='', suffix='')
         self.paginator.add_line(":red_circle: **Статистика подъехала**")
 
+        npc_loss = self.__stat.get('npc_loss')
         solo_loss = self.__stat.get('solo_loss')
         gang_loss = self.__stat.get('gang_loss')
 
         if solo_loss:
             cnt: int = solo_loss['cnt']
-            destroyed: int = solo_loss['fitted']
+            destroyed: int = solo_loss['destroyed']
             dropped: int = solo_loss['dropped']
             total: int = destroyed + dropped
             additional: str = ""
@@ -38,7 +39,7 @@ class FormattedDiscordStatisticsMessage:
 
         if gang_loss:
             cnt: int = gang_loss['cnt']
-            destroyed: int = gang_loss['fitted']
+            destroyed: int = gang_loss['destroyed']
             dropped: int = gang_loss['dropped']
             total: int = destroyed + dropped
             additional: str = ""
@@ -49,12 +50,20 @@ class FormattedDiscordStatisticsMessage:
                 f"потеряв `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` досталось врагу)"
                 f"{additional}.")
 
+        if npc_loss:
+            cnt: int = solo_loss['cnt']
+            destroyed: int = solo_loss['destroyed']
+            dropped: int = solo_loss['dropped']
+            total: int = destroyed + dropped
+            self.paginator.add_line(
+                f":crab: Об непись {self.cnt_to_ships_loss(cnt)} на `{self.isk_to_kkk(total)}`.")
+
         solo_win = self.__stat.get('solo_win')
         gang_win = self.__stat.get('gang_win')
 
         if solo_win:
             cnt: int = solo_win['cnt']
-            destroyed: int = solo_win['fitted']
+            destroyed: int = solo_win['destroyed']
             dropped: int = solo_win['dropped']
             total: int = destroyed + dropped
             additional: str = ""
@@ -67,7 +76,7 @@ class FormattedDiscordStatisticsMessage:
 
         if gang_win:
             cnt: int = gang_win['cnt']
-            destroyed: int = gang_win['fitted']
+            destroyed: int = gang_win['destroyed']
             dropped: int = gang_win['dropped']
             total: int = destroyed + dropped
             additional: str = ""
@@ -91,6 +100,20 @@ class FormattedDiscordStatisticsMessage:
                 self.paginator.add_line("Соло побед не было, флотами не летали.")
                 self.paginator.add_line("— Ленятся наверное, — подумал Штирлиц.")
                 self.paginator.add_line("— Или очень не везло, — усмехнулся Мюллер.")
+
+    @staticmethod
+    def cnt_to_ships_loss(cnt: int) -> str:
+        modulo: int = cnt % 100
+        if 5 <= modulo <= 20:
+            return f"потеряно {cnt} корабликов"
+        else:
+            modulo = cnt % 10
+            if (0 == modulo) or (5 <= modulo <= 9):
+                return f"потеряно {cnt} корабликов"
+            elif 2 <= modulo <= 4:
+                return f"потеряно {cnt} кораблика"
+            elif 1 == modulo:
+                return f"потерян {cnt} кораблик"
 
     @staticmethod
     def cnt_to_times(cnt: int) -> str:
