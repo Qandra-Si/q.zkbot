@@ -111,12 +111,14 @@ class MyClient(discord.Client):
             qzdb.commit()
 
         # получение информации о текущем времени
-        at_to: datetime.datetime = datetime.datetime.now(datetime.UTC) - datetime.timedelta(minutes=0)
+        at_to: datetime.datetime = datetime.datetime.now(datetime.UTC) - datetime.timedelta(
+            hours=q_settings.g_stat_publish_hour,
+            minutes=q_settings.g_stat_publish_minute)
         at_weekday: int = at_to.weekday()
         if self.__prev_weekday is not None:
             # публикация статистики раз в неделю (в 3 часа ночи МСК) с воскресенья на понедельник
-            if self.__prev_weekday == 6 and at_weekday == 0:
-                self.__prev_weekday = at_weekday
+            if self.__prev_weekday == q_settings.g_stat_publish_weekday and \
+               at_weekday == ((q_settings.g_stat_publish_weekday+1) % 7):
                 at_from: datetime.datetime = at_to - datetime.timedelta(days=7)
                 # публикация статистических сведений
                 stat = qzm.statistics_for_the_period(

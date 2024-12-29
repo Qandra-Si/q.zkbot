@@ -44,3 +44,9 @@ g_use_corporation_emblem_instead_alliance: bool = False
 #  * True - "потеряно 5 корабликов"
 #  * False - "потерян 31 шип"
 g_use_russian_style_ship_name: bool = True
+
+# настройки времени публикации статистики (время указывается по eve time)
+g_stat_publish_weekday: int = 6
+g_stat_publish_hour: int = 23
+g_stat_publish_minute: int = 59
+
