@@ -115,10 +115,11 @@ class MyClient(discord.Client):
             hours=q_settings.g_stat_publish_hour,
             minutes=q_settings.g_stat_publish_minute)
         at_weekday: int = at_to.weekday()
+        # debug: print(at_weekday, at_to)
         if self.__prev_weekday is not None:
             # публикация статистики раз в неделю (в 3 часа ночи МСК) с воскресенья на понедельник
-            if self.__prev_weekday == q_settings.g_stat_publish_weekday and \
-               at_weekday == ((q_settings.g_stat_publish_weekday+1) % 7):
+            if at_weekday == q_settings.g_stat_publish_weekday and \
+               self.__prev_weekday == ((q_settings.g_stat_publish_weekday+7-1) % 7):
                 at_from: datetime.datetime = at_to - datetime.timedelta(days=7)
                 # публикация статистических сведений
                 stat = qzm.statistics_for_the_period(
