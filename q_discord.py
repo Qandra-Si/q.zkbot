@@ -26,6 +26,7 @@ class MyClient(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__bot_id: int = 0
+        self.__prev_weekday: typing.Optional[int] = None
 
     async def setup_hook(self) -> None:
         # start the task to run in the background
@@ -111,25 +112,31 @@ class MyClient(discord.Client):
 
             # получение информации о текущем времени
             at_to: datetime.datetime = datetime.datetime.now(datetime.UTC)
-            at_from: datetime.datetime = at_to - datetime.timedelta(days=7)
-            # публикация статистических сведений
-            stat = qzm.statistics_for_the_period(
-                q_settings.q_tracked_corporations,
-                at_from,
-                at_to)
-            # получаем форматированное сообщение
-            fdm: fms.FormattedDiscordStatisticsMessage = fms.FormattedDiscordStatisticsMessage(
-                at_from,
-                at_to,
-                stat,
-                q_settings.g_use_russian_style_ship_name,
-                q_settings.g_use_corporation_emblem_instead_alliance)
-            if fdm.paginator:
-                e = fdm.embed
-                for page in fdm.paginator.pages:
-                    await channel.send(page, embed=e)
-                    e = None
-            del fdm
+            at_weekday: int = at_to.weekday()
+            if self.__prev_weekday is not None:
+                # публикация статистики раз в неделю (в 3 часа ночи МСК) с воскресенья на понедельник
+                if self.__prev_weekday == 6 and at_weekday == 0:
+                    self.__prev_weekday = at_weekday
+                    at_from: datetime.datetime = at_to - datetime.timedelta(days=7)
+                    # публикация статистических сведений
+                    stat = qzm.statistics_for_the_period(
+                        q_settings.q_tracked_corporations,
+                        at_from,
+                        at_to)
+                    # получаем форматированное сообщение
+                    fdm: fms.FormattedDiscordStatisticsMessage = fms.FormattedDiscordStatisticsMessage(
+                        at_from,
+                        at_to,
+                        stat,
+                        q_settings.g_use_russian_style_ship_name,
+                        q_settings.g_use_corporation_emblem_instead_alliance)
+                    if fdm.paginator:
+                        e = fdm.embed
+                        for page in fdm.paginator.pages:
+                            await channel.send(page, embed=e)
+                            e = None
+                    del fdm
+            self.__prev_weekday = at_weekday
 
         # заканчиваем сеанс работы с БД
         del qzm
