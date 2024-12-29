@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 import datetime
 import typing
+import pytz
 
 from .db_interface import QZKBotDatabase
 from .error import ZKBotDatabaseError
@@ -395,7 +396,8 @@ where zkm_id=%(id)s and zkm_published;""",
             self,
             tracked_corporation_ids: typing.List[int],
             period_from: datetime.datetime,
-            period_to: datetime.datetime) -> typing.Dict[str, typing.Dict[str, typing.Union[int, str]]]:
+            period_to: datetime.datetime) -> \
+            typing.Dict[str, typing.Dict[str, typing.Union[int, str, datetime.datetime]]]:
         res: typing.Dict[str, typing.Dict[str, int]] = {}
         stat0 = self.db.select_all_rows("""
 select
@@ -460,6 +462,7 @@ select
  round(x.cargo::numeric,0) as cargo,
  x.loss,
  x.killmail_id,
+ x.time,
  x.solar_system_id,
  x.pilot_id,
  x.ship_type_id,
@@ -475,6 +478,7 @@ from (
   x.cargo,
   x.loss,
   x.killmail_id,
+  x.time,
   x.solar_system_id,
   x.pilot_id,
   x.ship_type_id,
@@ -487,6 +491,7 @@ from (
    coalesce(zkm_total_value-zkm_fitted_value,0) as cargo,
    true as loss,
    v_killmail_id as killmail_id,
+   km_time as time,
    km_solar_system_id as solar_system_id,
    v_character_id as pilot_id,
    v_damage_taken as damage_taken,
@@ -512,6 +517,7 @@ from (
    coalesce(zkm_total_value-zkm_fitted_value,0) as cargo,
    false as loss,
    v_killmail_id as killmail_id,
+   km_time as time,
    km_solar_system_id as solar_system_id,
    v_character_id as pilot_id,
    v_ship_type_id as ship_type_id,
@@ -533,10 +539,10 @@ from (
             'dt1': period_from,
             'dt2': period_to,
         })
-        # total     |cargo    |loss |killmail_id|solar_system_id|pilot_id  |ship_type_id|damage_taken|alliance_id|corporation_id|pilot_name      |solar_system|ship_type_name|
-        # ----------+---------+-----+-----------+---------------+----------+------------+------------+-----------+--------------+----------------+------------+--------------+
-        # 2606168662|316623629| x   |  122808562|       31001895|2112509491|       28659|      540060|   99012896|     787611831|JohnWickgg Hadah|J132823     |Paladin       |
-        # 9921169230|223322899|     |  123292200|       30000162|2120220330|     1497815|       73793|   99003581|      98588384|Nicholas Kaga   |Maila       |              |
+        # total     |cargo    |loss |killmail_id|time                   |solar_system_id|pilot_id  |ship_type_id|damage_taken|alliance_id|corporation_id|pilot_name      |solar_system|ship_type_name|
+        # ----------+---------+-----+-----------+-----------------------+---------------+----------+------------+------------+-----------+--------------+----------------+------------+--------------+
+        # 2606168662|316623629|true |  122808562|2024-11-26 21:07:15.000|       31001895|2112509491|       28659|      540060|   99012896|     787611831|JohnWickgg Hadah|J132823     |Paladin       |
+        # 9921169230|223322899|false|  123292200|2024-12-16 19:09:19.000|       30000162|2120220330|     1497815|       73793|   99003581|      98588384|Nicholas Kaga   |Maila       |              |
         if stat1 is not None:
             for s in stat1:
                 if not s[2]:  # win
@@ -546,15 +552,16 @@ from (
                 res[title] = {'total': int(s[0]),
                               'cargo': int(s[1]),
                               'killmail_id': int(s[3]),
-                              'solar_system_id': int(s[4]),
-                              'pilot_id': int(s[5]),
-                              'ship_type_id': int(s[6]),
-                              'damage_taken': int(s[7]),
-                              'alliance_id': int(s[8]) if s[8] else None,
-                              'corporation_id': int(s[9]) if s[9] else None,
-                              'pilot_name': str(s[10]),
-                              'solar_system': str(s[11]),
-                              'ship_type_name': str(s[12]),
+                              'time': s[4].replace(tzinfo=pytz.UTC),
+                              'solar_system_id': int(s[5]),
+                              'pilot_id': int(s[6]),
+                              'ship_type_id': int(s[7]),
+                              'damage_taken': int(s[8]),
+                              'alliance_id': int(s[9]) if s[9] else None,
+                              'corporation_id': int(s[10]) if s[10] else None,
+                              'pilot_name': str(s[11]),
+                              'solar_system': str(s[12]),
+                              'ship_type_name': str(s[13]),
                               }
         return res
 

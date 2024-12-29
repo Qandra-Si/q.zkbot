@@ -2,6 +2,7 @@ typing
 requests
 python-jose
 datetime
+pytz
 urllib3
 python-dateutil
 psycopg2

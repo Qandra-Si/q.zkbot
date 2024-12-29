@@ -8,14 +8,14 @@ class FormattedDiscordStatisticsMessage:
     def __init__(self,
                  period_from: datetime.datetime,
                  period_to: datetime.datetime,
-                 stat: typing.Dict[str, typing.Dict[str, typing.Union[int, str]]],
+                 stat: typing.Dict[str, typing.Dict[str, typing.Union[int, str, datetime.datetime]]],
                  use_russian_style_ship_name: bool,
                  use_corporation_instead_alliance: bool):
         self.paginator: typing.Optional[discord.ext.commands.Paginator] = None
         self.embed: typing.Optional[discord.Embed] = None
         self.__period_from: datetime.datetime = period_from
         self.__period_to: datetime.datetime = period_to
-        self.__stat: typing.Dict[str, typing.Dict[str, typing.Union[int, str]]] = stat
+        self.__stat: typing.Dict[str, typing.Dict[str, typing.Union[int, str, datetime.datetime]]] = stat
         self.format(use_russian_style_ship_name, use_corporation_instead_alliance)
 
     def format(self,
@@ -127,12 +127,16 @@ class FormattedDiscordStatisticsMessage:
             ship_type_name: str = largest['ship_type_name']
             damage_taken: int = largest['damage_taken']
             killmail_id: int = largest['killmail_id']
+            killmail_date: str = largest['time'].strftime('%Y-%m-%d')  # '2024-12-28'
             cargo: int = largest['cargo']
             cargo_additional: str = f" с `{self.isk_to_kkk(cargo)}` в карго" if cargo else ""
             pilot_name: str = largest['pilot_name']
             alliance_id: typing.Optional[int] = largest['alliance_id']
             corporation_id: typing.Optional[int] = largest['corporation_id']
 
+            # выбор пояснения для footer
+
+            footer_text: str = f"{pilot_name} ● {killmail_date}"
             # выбор иконки, которая появится в footer-е
             footer_icon: typing.Optional[str] = None
             if not is_largest_win and use_corporation_instead_alliance and corporation_id:
@@ -158,9 +162,9 @@ class FormattedDiscordStatisticsMessage:
                 colour=0x2e6b4d if is_largest_win else 0xC85C70)
             self.embed.set_image(url=f"https://imageserver.eveonline.com/Type/{ship_type_id}_64.png")
             if footer_icon:
-                self.embed.set_footer(text=pilot_name, icon_url=footer_icon)
+                self.embed.set_footer(text=footer_text, icon_url=footer_icon)
             else:
-                self.embed.set_footer(text=pilot_name)
+                self.embed.set_footer(text=footer_text)
 
     @staticmethod
     def cnt_to_ships_loss(cnt: int, use_russian_style_ship_name: bool) -> str:
