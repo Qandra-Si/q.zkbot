@@ -196,6 +196,8 @@ class FormattedDiscordStatisticsMessage:
 
     @staticmethod
     def cnt_to_times(cnt: int) -> str:
+        # Мы слились...
+        # мы убились...
         modulo: int = cnt % 100
         if 5 <= modulo <= 20:
             return f"{cnt} раз"
@@ -210,6 +212,7 @@ class FormattedDiscordStatisticsMessage:
 
     @staticmethod
     def cnt_to_enemies(cnt: int) -> str:
+        # мы победили...
         modulo: int = cnt % 100
         if 5 <= modulo <= 20:
             return f"{cnt} противников"
@@ -220,7 +223,7 @@ class FormattedDiscordStatisticsMessage:
             elif 2 <= modulo <= 4:
                 return f"{cnt} противника"
             elif modulo == 1:
-                return f"{cnt} противник"
+                return f"{cnt} противника"
 
     @staticmethod
     def isk_to_kkk(isk: int) -> str:
