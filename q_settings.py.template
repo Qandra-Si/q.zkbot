@@ -4,8 +4,8 @@ g_discord_token: str = '00000000000000000000000000000000000000000000000000000000
 q_discord_channel: int = 0000000000000000000  # <-- this is the value you need to edit
 
 g_esi_client_id = "00000000000000000000000000000000"  # <-- this is the value you need to edit
-g_esi_client_scope = ["esi-killmails.read_corporation_killmails.v1",  # Requires role(s): Director
-                     ]
+g_esi_client_scope = ["esi-killmails.read_corporation_killmails.v1"]  # Requires role(s): Director
+
 # TLS1.3 with SNI denied in Russia by RKN since 06.11.2024
 # для того, чтобы проверить, нужно ли выставить следующий параметр в True, следует выполнить команду:
 # curl -X GET "https://esi.evetech.net/latest/status/?datasource=tranquility" \
@@ -13,7 +13,8 @@ g_esi_client_scope = ["esi-killmails.read_corporation_killmails.v1",  # Requires
 #      -H "Cache-Control: no-cache"
 # если придёт ошибка: {"error":"unroutable"}, то выставить в True
 # также можно проврерить различие и удостовериться:
-# curl --tlsv1.2 --tls-max 1.2 -X GET "https://esi.evetech.net/latest/status/?datasource=tranquility" \
+# curl --tlsv1.2 --tls-max 1.2 \
+#      -X GET "https://esi.evetech.net/latest/status/?datasource=tranquility" \
 #      -H "accept: application/json" \
 #      -H "Cache-Control: no-cache"
 g_client_restrict_tls13: bool = False
@@ -35,6 +36,8 @@ g_database = {
     "password": "qz_LAZ7dBLmSJb9"  # <-- this is the value you probably need to edit
 }
 
+# настройка поведения discord-бота, которому сообщается список корпораций для обработки
+# настройка должна соответствовать всем запускаем q_loader.py скриптам
 q_tracked_corporations: typing.List[int] = [000000000]  # <-- this is the value you need to edit
 
 # с помощью следующей настройки можно указать, чтобы в footer-е появлялся значёк крпорации, а не альянса, в тех

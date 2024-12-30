@@ -26,6 +26,7 @@ import sys
 import argparse
 import typing
 import datetime
+import requests
 
 import q_settings
 import eve_esi_interface as esi
@@ -114,14 +115,22 @@ def main():
     print(f"{character_name} is from '{corporation_name}' corporation\n")
     sys.stdout.flush()
 
-    # Requires role(s): Director
-    corp_killmails_data = esi_interface.get_esi_paged_data(f"corporations/{corporation_id}/killmails/recent/")
-    print(f"'{corporation_name}' corporation has {len(corp_killmails_data)} recent killmails\n")
-    sys.stdout.flush()
+    try:
+        # Requires role(s): Director
+        corp_killmails_data = esi_interface.get_esi_paged_data(f"corporations/{corporation_id}/killmails/recent/")
+        print(f"'{corporation_name}' corporation has {len(corp_killmails_data)} recent killmails\n")
+        sys.stdout.flush()
 
-    for zkm in corp_killmails_data:
-        qzm.insert_into_zkillmails_hash_only(zkm, esi_interface.last_modified if esi_interface.last_modified else at)
-    qzdb.commit()
+        for zkm in corp_killmails_data:
+            qzm.insert_into_zkillmails_hash_only(zkm, esi_interface.last_modified if esi_interface.last_modified else at)
+        qzdb.commit()
+    except requests.exceptions.HTTPError as err:
+        status_code = err.response.status_code
+        if status_code != 403:  # это нормально, если нет директорского доступа (остальные ошибки отправляем в reraise)
+            raise
+    except:
+        print(sys.exc_info())
+        raise
 
     # Public information (zkillboard)
     corp_zkillmails_data = zkb_interface.get_zkb_data(f"corporationID/{corporation_id}/")
@@ -138,9 +147,15 @@ def main():
 
     if unrelated_killmails:
         for killmail_id, killmail_hash in unrelated_killmails:
+            if killmail_hash == "CCP VERIFIED": continue
+
             # Public information
             killmail_data = esi_interface.get_esi_data(f"killmails/{killmail_id}/{killmail_hash}/")
             sys.stdout.flush()
+
+            # здесь могут оказаться ответы с кодом 422, и хеш-суммой запроса "killmails/108794056/CCP VERIFIED/"
+            # сервер по какой-то причине не отдаёт данные
+            if killmail_data is None: continue
 
             alliances: typing.Set[int] = set()
             corporations: typing.Set[int] = set()
@@ -195,14 +210,27 @@ def main():
             if characters:
                 characters: typing.List[int] = qzm.get_absent_character_ids(characters)
                 for character_id in characters:
-                    # Public information about a character
-                    character_data = esi_interface.get_esi_data(
-                        url=f"characters/{character_id}/",
-                        fully_trust_cache=True)
-                    sys.stdout.flush()
+                    try:
+                        # Public information about a character
+                        character_data = esi_interface.get_esi_data(
+                            url=f"characters/{character_id}/",
+                            fully_trust_cache=True)
+                        sys.stdout.flush()
 
-                    if character_data:
-                        qzm.insert_or_update_character(character_id, character_data, at)
+                        if character_data:
+                            qzm.insert_or_update_character(character_id, character_data, at)
+                    except requests.exceptions.HTTPError as err:
+                        status_code = err.response.status_code
+                        if status_code == 404:  # {'error': 'Character has been deleted!'}
+                            qzm.insert_or_update_character(
+                                character_id,
+                                {'id': character_id, 'name': 'Character has been deleted!'},
+                                at)
+                        else:
+                            raise
+                    except:
+                        print(sys.exc_info())
+                        raise
 
             if type_ids:
                 type_ids: typing.List[int] = qzm.get_absent_type_ids(type_ids)
