@@ -24,45 +24,6 @@ class FormattedDiscordStatisticsMessage:
         self.paginator = discord.ext.commands.Paginator(prefix='', suffix='')
         self.paginator.add_line(":red_circle: **Статистика подъехала**")
 
-        npc_loss = self.__stat.get('npc_loss')
-        solo_loss = self.__stat.get('solo_loss')
-        gang_loss = self.__stat.get('gang_loss')
-
-        if solo_loss:
-            cnt: int = solo_loss['cnt']
-            destroyed: int = solo_loss['destroyed']
-            dropped: int = solo_loss['dropped']
-            total: int = destroyed + dropped
-            additional: str = ""
-            if not gang_loss:
-                additional = ", :tada: об ганги не убились ни разу"
-            self.paginator.add_line(
-                f":people_wrestling: Мы слились в честном соло-pvp {self.cnt_to_times(cnt)}, "
-                f"потеряв `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` досталось врагу)"
-                f"{additional}.")
-
-        if gang_loss:
-            cnt: int = gang_loss['cnt']
-            destroyed: int = gang_loss['destroyed']
-            dropped: int = gang_loss['dropped']
-            total: int = destroyed + dropped
-            additional: str = ""
-            if not solo_loss:
-                additional = ", :no_good: потерь в соло-pvp не было"
-            self.paginator.add_line(
-                f":person_in_manual_wheelchair_facing_right: Об ганги мы убились {self.cnt_to_times(cnt)}, "
-                f"потеряв `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` досталось врагу)"
-                f"{additional}.")
-
-        if npc_loss:
-            cnt: int = npc_loss['cnt']
-            destroyed: int = npc_loss['destroyed']
-            dropped: int = npc_loss['dropped']
-            total: int = destroyed + dropped
-            self.paginator.add_line(
-                f":crab: Об непись {self.cnt_to_ships_loss(cnt, use_russian_style_ship_name)} на "
-                f"`{self.isk_to_kkk(total)}`.")
-
         solo_win = self.__stat.get('solo_win')
         gang_win = self.__stat.get('gang_win')
 
@@ -91,6 +52,45 @@ class FormattedDiscordStatisticsMessage:
                 f":pirate_flag: Флотами {self.cnt_to_ships_wins(cnt, use_russian_style_ship_name)} "
                 f"на сумму `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` залутано)"
                 f"{additional}.")
+
+        npc_loss = self.__stat.get('npc_loss')
+        solo_loss = self.__stat.get('solo_loss')
+        gang_loss = self.__stat.get('gang_loss')
+
+        if solo_loss:
+            cnt: int = solo_loss['cnt']
+            destroyed: int = solo_loss['destroyed']
+            dropped: int = solo_loss['dropped']
+            total: int = destroyed + dropped
+            additional: str = ""
+            if not gang_loss:
+                additional = ", :tada: об ганги не убились ни разу"
+            self.paginator.add_line(
+                f":people_wrestling: Слились в честном соло-pvp {self.cnt_to_times(cnt)}, "
+                f"потеряв `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` досталось врагу)"
+                f"{additional}.")
+
+        if gang_loss:
+            cnt: int = gang_loss['cnt']
+            destroyed: int = gang_loss['destroyed']
+            dropped: int = gang_loss['dropped']
+            total: int = destroyed + dropped
+            additional: str = ""
+            if not solo_loss:
+                additional = ", :no_good: потерь в соло-pvp не было"
+            self.paginator.add_line(
+                f":person_in_manual_wheelchair_facing_right: Об ганги мы убились {self.cnt_to_times(cnt)}, "
+                f"потеряв `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` досталось врагу)"
+                f"{additional}.")
+
+        if npc_loss:
+            cnt: int = npc_loss['cnt']
+            destroyed: int = npc_loss['destroyed']
+            dropped: int = npc_loss['dropped']
+            total: int = destroyed + dropped
+            self.paginator.add_line(
+                f":crab: Об непись {self.cnt_to_ships_loss(cnt, use_russian_style_ship_name)} на "
+                f"`{self.isk_to_kkk(total)}`.")
 
         if not solo_loss and not gang_loss and not solo_win and not gang_win:
             if npc_loss:
