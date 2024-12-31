@@ -33,12 +33,13 @@ class FormattedDiscordStatisticsMessage:
             dropped: int = solo_win['dropped']
             total: int = destroyed + dropped
             additional: str = ""
+            if dropped:
+                additional += f" (`{self.isk_to_kkk(dropped)}` залутано)"
             if not gang_win:
-                additional = ", :zzz: в гангах никто не летал и ничего не убил"
+                additional += ", :zzz: в гангах никто не летал и ничего не убил"
             self.paginator.add_line(
                 f":clap: В честном соло-pvp мы победили {self.cnt_to_enemies(cnt)}, "
-                f"уничтожив `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` залутано)"
-                f"{additional}.")
+                f"уничтожив `{self.isk_to_kkk(total)}`{additional}.")
 
         if gang_win:
             cnt: int = gang_win['cnt']
@@ -46,12 +47,13 @@ class FormattedDiscordStatisticsMessage:
             dropped: int = gang_win['dropped']
             total: int = destroyed + dropped
             additional: str = ""
+            if dropped:
+                additional += f" (`{self.isk_to_kkk(dropped)}` залутано)"
             if not solo_win:
-                additional = ", :martial_arts_uniform: в соло никто ничего не убил"
+                additional += ", :martial_arts_uniform: в соло никто ничего не убил"
             self.paginator.add_line(
                 f":pirate_flag: Флотами {self.cnt_to_ships_wins(cnt, use_russian_style_ship_name)} "
-                f"на сумму `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` залутано)"
-                f"{additional}.")
+                f"на сумму `{self.isk_to_kkk(total)}`{additional}.")
 
         npc_loss = self.__stat.get('npc_loss')
         solo_loss = self.__stat.get('solo_loss')
@@ -63,12 +65,13 @@ class FormattedDiscordStatisticsMessage:
             dropped: int = solo_loss['dropped']
             total: int = destroyed + dropped
             additional: str = ""
+            if dropped:
+                additional += f" (`{self.isk_to_kkk(dropped)}` досталось врагу)"
             if not gang_loss:
-                additional = ", :tada: об ганги не убились ни разу"
+                additional += ", :tada: об ганги не убились ни разу"
             self.paginator.add_line(
                 f":people_wrestling: Слились в честном соло-pvp {self.cnt_to_times(cnt)}, "
-                f"потеряв `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` досталось врагу)"
-                f"{additional}.")
+                f"потеряв `{self.isk_to_kkk(total)}`{additional}.")
 
         if gang_loss:
             cnt: int = gang_loss['cnt']
@@ -76,12 +79,13 @@ class FormattedDiscordStatisticsMessage:
             dropped: int = gang_loss['dropped']
             total: int = destroyed + dropped
             additional: str = ""
+            if dropped:
+                additional += f" (`{self.isk_to_kkk(dropped)}` досталось врагу)"
             if not solo_loss:
-                additional = ", :no_good: потерь в соло-pvp не было"
+                additional += ", :no_good: потерь в соло-pvp не было"
             self.paginator.add_line(
                 f":person_in_manual_wheelchair_facing_right: Об ганги мы убились {self.cnt_to_times(cnt)}, "
-                f"потеряв `{self.isk_to_kkk(total)}` (`{self.isk_to_kkk(dropped)}` досталось врагу)"
-                f"{additional}.")
+                f"потеряв `{self.isk_to_kkk(total)}`{additional}.")
 
         if npc_loss:
             cnt: int = npc_loss['cnt']

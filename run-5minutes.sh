@@ -10,6 +10,7 @@ echo "<<<               >>>"
 echo "<<< run-killmails >>>"
 echo "<<<               >>>"
 for pilot_name in "$@"; do
+  echo ">>> $pilot_name"
   $RUN_DIR/.venv/bin/python3 $RUN_DIR/q_loader.py --pilot="$pilot_name" --online --cache_dir=$RUN_DIR/.q_zkbot
 done
 
