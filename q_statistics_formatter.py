@@ -99,20 +99,20 @@ class FormattedDiscordStatisticsMessage:
         if not solo_loss and not gang_loss and not solo_win and not gang_win:
             if npc_loss:
                 self.paginator.add_line("Вылетов не было, скрабились.")
-                self.paginator.add_line("— Все этим занимаются, но никто не признаётся.")
+                self.paginator.add_line("> — Все этим занимаются, но никто не признаётся.")
             else:
-                self.paginator.add_line("— И сия пучина поглотила ея в один момент.")
-                self.paginator.add_line("— В общем все умерли.")
+                self.paginator.add_line("> — И сия пучина поглотила ея в один момент.")
+                self.paginator.add_line("> — В общем все умерли.")
         else:
             if not solo_loss and not gang_loss:
                 self.paginator.add_line("Ни разу не слились.")
-                self.paginator.add_line("— Пацаны, ваще ребята.")
-                self.paginator.add_line("— Умеете, могёте.")
+                self.paginator.add_line("> — Пацаны, ваще ребята.")
+                self.paginator.add_line("> — Умеете, могёте.")
 
             if not solo_win and not gang_win:
                 self.paginator.add_line("Соло побед не было, флотами не летали.")
-                self.paginator.add_line("— Ленятся наверное, — подумал Штирлиц.")
-                self.paginator.add_line("— Или очень не везло, — усмехнулся Мюллер.")
+                self.paginator.add_line("> — Ленятся наверное, — подумал Штирлиц.")
+                self.paginator.add_line("> — Или очень не везло, — усмехнулся Мюллер.")
 
         largest_win = self.__stat.get('largest_win')
         largest_loss = self.__stat.get('largest_loss')
