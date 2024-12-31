@@ -101,6 +101,7 @@ class FormattedDiscordStatisticsMessage:
                 self.paginator.add_line("Вылетов не было, скрабились.")
                 self.paginator.add_line("> — Все этим занимаются, но никто не признаётся.")
             else:
+                self.paginator.add_line("Вылетов не было.")
                 self.paginator.add_line("> — И сия пучина поглотила ея в один момент.")
                 self.paginator.add_line("> — В общем все умерли.")
         else:
