@@ -9,13 +9,16 @@ class FormattedDiscordKillmailMessage:
                  killmail_data: typing.Dict[str, typing.Any],
                  killmail_attackers: typing.Dict[str, typing.Any],
                  tracked_corporation_ids: typing.List[int],
-                 use_corporation_instead_alliance: bool):
+                 use_corporation_instead_alliance: bool,
+                 use_parrot_style_of_points: bool):
         self.contents: typing.Optional[str] = None
         self.embed: typing.Optional[discord.Embed] = None
         self.__killmail_id: int = killmail_id
         self.__killmail_data: typing.Dict[str, typing.Any] = killmail_data
         self.__killmail_attackers: typing.Dict[str, typing.Any] = killmail_attackers
-        self.format(tracked_corporation_ids, use_corporation_instead_alliance)
+        self.format(tracked_corporation_ids,
+                    use_corporation_instead_alliance,
+                    use_parrot_style_of_points)
 
     @staticmethod
     def __pilot_url(pilot_id: int, pilot_name: typing.Optional[str]) -> str:
@@ -38,7 +41,8 @@ class FormattedDiscordKillmailMessage:
 
     def format(self,
                tracked_corporation_ids: typing.List[int],
-               use_corporation_instead_alliance: bool) -> None:
+               use_corporation_instead_alliance: bool,
+               use_parrot_style_of_points: bool) -> None:
         attacker_corps: typing.List[typing.Dict[str, typing.Any]] = self.__killmail_attackers['corporations']
         attacker_alli: typing.List[typing.Dict[str, typing.Any]] = self.__killmail_attackers['alliances']
         attacker_solo: typing.Optional[typing.Dict[str, typing.Any]] = self.__killmail_attackers['solo']
@@ -267,7 +271,7 @@ class FormattedDiscordKillmailMessage:
         datetime_txt = f"{datetime_txt[:10]} {datetime_txt[11:16]}"
         footer_txt: str = datetime_txt
         if zkb.get('points', 0):
-            points: str = self.get_points_description(zkb['points'])
+            points: str = self.get_points_description(zkb['points'], use_parrot_style_of_points)
             footer_txt += f" ● {points}"
         if solo or zkb.get('solo', False):
             footer_txt += " ● соло"
@@ -299,16 +303,16 @@ class FormattedDiscordKillmailMessage:
         else:
             self.embed.set_footer(text=footer_txt)
 
-    def get_points_description(self, points: int) -> str:
-        #return f"{points} points"
+    @staticmethod
+    def get_points_description(points: int, use_parrot_style_of_points: bool) -> str:
         modulo: int = points % 100
         if 5 <= modulo <= 20:
-            return f"{points} попугаев"
+            return f"{points} {'попугаев' if use_parrot_style_of_points else 'очков'}"
         else:
             modulo = points % 10
             if (0 == modulo) or (5 <= modulo <= 9):
-                return f"{points} попугаев"
+                return f"{points} {'попугаев' if use_parrot_style_of_points else 'очков'}"
             elif 2 <= modulo <= 4:
-                return f"{points} попугая"
+                return f"{points} {'попугая' if use_parrot_style_of_points else 'очка'}"
             elif modulo == 1:
-                return f"{points} попугай"
+                return f"{points} {'попугай' if use_parrot_style_of_points else 'очко'}"

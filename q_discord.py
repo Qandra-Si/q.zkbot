@@ -70,7 +70,8 @@ class MyClient(discord.Client):
                     killmail_data,
                     killmail_attackers,
                     q_settings.q_tracked_corporations,
-                    q_settings.g_use_corporation_emblem_instead_alliance)
+                    q_settings.g_use_corporation_emblem_instead_alliance,
+                    q_settings.g_use_parrot_style_of_points)
                 if fdm.contents and fdm.embed:
                     await msg.edit(content=fdm.contents, embed=fdm.embed)
                 del fdm
@@ -100,7 +101,8 @@ class MyClient(discord.Client):
                 killmail_data,
                 killmail_attackers,
                 q_settings.q_tracked_corporations,
-                q_settings.g_use_corporation_emblem_instead_alliance)
+                q_settings.g_use_corporation_emblem_instead_alliance,
+                q_settings.g_use_parrot_style_of_points)
             if fdm.contents and fdm.embed:
                 await channel.send(content=fdm.contents, embed=fdm.embed)
             else:
