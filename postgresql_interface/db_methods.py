@@ -90,7 +90,7 @@ class QZKBotMethods:
             "WHERE zkillmails.zkm_points IS NULL;",
             {'id': zkm_data['killmail_id'],
              'h': zkb['hash'],
-             'l': zkb['locationID'],
+             'l': zkb.get('locationID', None),
              'fv': zkb.get('fittedValue', None),
              'drv': zkb.get('droppedValue', None),
              'dev': zkb.get('destroyedValue', None),
